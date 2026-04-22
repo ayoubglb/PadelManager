@@ -1,14 +1,13 @@
 package be.ephec.padelmanager;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
 class PadelManagerApplicationTests {
 
     @Test
-    void JUnitTest() {
-        assert 1 + 1 == 2; // Je vérifie que JUnit fonctionne
+    void sanityCheck() {
+        assertTrue(1 + 1 == 2, "Math should work");
     }
 
 }

@@ -33,6 +33,7 @@
     "@angular/compiler-cli": "^21.2.0",
     "@cypress/schematic": "^5.0.0",
     "@tailwindcss/postcss": "^4.1.12",
+    "@vitest/coverage-v8": "^4.1.5",
     "cypress": "15.14.1",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
