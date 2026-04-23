@@ -65,8 +65,13 @@ class JwtServiceTest {
     @DisplayName("Token falsifié (signature modifiée) → parser() vide, pas d'exception")
     void tokenFalsifieRejete() {
         String token = jwtService.genererToken(principal);
-        // Altère le dernier caractère de la signature
-        String falsifie = token.substring(0, token.length() - 1) + (token.endsWith("A") ? "B" : "A");
+
+        // Altère un caractère au milieu de la signature (partie après le dernier '.')
+        int debutSignature = token.lastIndexOf('.') + 1;
+        int milieu = debutSignature + (token.length() - debutSignature) / 2;
+        char original = token.charAt(milieu);
+        char remplacement = (original == 'A' ? 'B' : 'A');
+        String falsifie = token.substring(0, milieu) + remplacement + token.substring(milieu + 1);
 
         assertThat(jwtService.parser(falsifie)).isEmpty();
         assertThat(jwtService.extraireMatricule(falsifie)).isEmpty();
