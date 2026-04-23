@@ -10,6 +10,6 @@
       Chaque nouveau fichier de changesets doit être inclus ici dans l'ordre chronologique.
     -->
 
-    <include file="db/changelog/changes/001-initial.xml"/>
+    <include file="db/changelog/changes/001-initial.sql"/>
 
 </databaseChangeLog>
