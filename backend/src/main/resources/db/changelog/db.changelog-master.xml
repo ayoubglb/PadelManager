@@ -12,5 +12,6 @@
 
     <include file="db/changelog/changes/001-initial.sql"/>
     <include file="/db/changelog/changes/002-utilisateur-table.sql"/>
+    <include file="db/changelog/changes/003-seed-utilisateurs.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
