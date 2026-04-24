@@ -106,24 +106,22 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Register email déjà utilisé → erreur")
+    @DisplayName("Register email déjà utilisé → exception métier levée par le service")
     void registerEmailDupliqueRejete() throws Exception {
         RegisterRequest doublon = new RegisterRequest(
                 "Autre", "Personne", "admin.global@padelmanager.be", "+32475999002",
                 "motdepasse123", RoleUtilisateur.MEMBRE_LIBRE, null
         );
-
-        // Sans @ControllerAdvice (arrivera au commit 04), IllegalArgumentException → 500.
-        // On assouplit l'assertion pour que ce test reste vert maintenant et continue de
-        // passer quand on durcira en 400 au commit 04.
-        mockMvc.perform(post("/auth/register")
+        jakarta.servlet.ServletException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                jakarta.servlet.ServletException.class,
+                () -> mockMvc.perform(post("/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(doublon)))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status < 400 || status >= 600) {
-                        throw new AssertionError("Attendu une erreur 4xx ou 5xx, obtenu : " + status);
-                    }
-                });
+        );
+
+        org.assertj.core.api.Assertions.assertThat(exception)
+                .rootCause()
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("existe déjà");
     }
 }
