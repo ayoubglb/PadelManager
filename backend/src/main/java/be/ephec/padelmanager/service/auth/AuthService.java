@@ -4,6 +4,7 @@ import be.ephec.padelmanager.dto.auth.AuthResponse;
 import be.ephec.padelmanager.dto.auth.LoginRequest;
 import be.ephec.padelmanager.dto.auth.RegisterRequest;
 import be.ephec.padelmanager.entity.RoleUtilisateur;
+import be.ephec.padelmanager.entity.Site;
 import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.mapper.AuthMapper;
 import be.ephec.padelmanager.repository.UtilisateurRepository;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import be.ephec.padelmanager.repository.SiteRepository;
 
 
 import java.security.SecureRandom;
@@ -47,6 +49,7 @@ public class AuthService {
     private final JwtProperties jwtProperties;
     private final AuthMapper authMapper;
     private final SecureRandom random = new SecureRandom();
+    private final SiteRepository siteRepository;
 
     // ------------------------------------------------------------------
     // Inscription publique
@@ -54,7 +57,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse inscrire(RegisterRequest requete) {
-        // 1. CF-AA-006 : l'inscription publique ne crée que des rôles membres
+
         if (!ROLES_INSCRIPTION_PUBLIQUE.contains(requete.role())) {
             throw new IllegalArgumentException(
                     "L'inscription publique ne permet de créer que des comptes membre."
@@ -69,7 +72,15 @@ public class AuthService {
             throw new IllegalArgumentException("Un compte existe déjà avec cet email.");
         }
 
-        // 4. Persistance
+        //  Chargement du site si rattachement demandé
+        Site site = null;
+        if (requete.siteRattachementId() != null) {
+            site = siteRepository.findById(requete.siteRattachementId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Site introuvable : id=" + requete.siteRattachementId()
+                    ));
+        }
+        //  Persistance
         Utilisateur nouvel = Utilisateur.builder()
                 .matricule(genererMatriculeUnique(requete.role()))
                 .nom(requete.nom())
@@ -78,7 +89,7 @@ public class AuthService {
                 .telephone(requete.telephone())
                 .passwordHash(passwordEncoder.encode(requete.motDePasse()))
                 .role(requete.role())
-                .siteRattachementId(requete.siteRattachementId())
+                .siteRattachement(site)                    // ← CHANGÉ (avant: .siteRattachementId(requete.siteRattachementId()))
                 .active(true)
                 .build();
 

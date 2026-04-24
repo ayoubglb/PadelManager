@@ -1,15 +1,6 @@
 package be.ephec.padelmanager.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,8 +55,10 @@ public class Utilisateur {
     @Column(name = "role", nullable = false, length = 20)
     private RoleUtilisateur role;
 
-    @Column(name = "site_rattachement_id")
-    private Long siteRattachementId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_rattachement_id",
+            foreignKey = @ForeignKey(name = "fk_utilisateur_site"))
+    private Site siteRattachement;
 
     @Column(name = "active", nullable = false)
     @Builder.Default
