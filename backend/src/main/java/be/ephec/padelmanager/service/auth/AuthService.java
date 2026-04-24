@@ -5,6 +5,7 @@ import be.ephec.padelmanager.dto.auth.LoginRequest;
 import be.ephec.padelmanager.dto.auth.RegisterRequest;
 import be.ephec.padelmanager.entity.RoleUtilisateur;
 import be.ephec.padelmanager.entity.Utilisateur;
+import be.ephec.padelmanager.mapper.AuthMapper;
 import be.ephec.padelmanager.repository.UtilisateurRepository;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.security.jwt.JwtProperties;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.security.SecureRandom;
 import java.util.EnumSet;
@@ -43,6 +45,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final AuthMapper authMapper;
     private final SecureRandom random = new SecureRandom();
 
     // ------------------------------------------------------------------
@@ -58,10 +61,10 @@ public class AuthService {
             );
         }
 
-        // 2. CF-RS-017 / CF-RS-018 : cohérence rôle ↔ siteRattachement
+
         validerCoherenceSite(requete.role(), requete.siteRattachementId());
 
-        // 3. Unicité email (matricule géré par boucle de génération)
+
         if (utilisateurRepository.existsByEmail(requete.email())) {
             throw new IllegalArgumentException("Un compte existe déjà avec cet email.");
         }
@@ -82,9 +85,9 @@ public class AuthService {
         nouvel = utilisateurRepository.save(nouvel);
         log.info("Nouvel utilisateur inscrit : matricule={}, role={}", nouvel.getMatricule(), nouvel.getRole());
 
-        // 5. Émission du token pour connexion automatique post-inscription
+
         String token = jwtService.genererToken(new UtilisateurPrincipal(nouvel));
-        return construireReponse(nouvel, token);
+        return authMapper.versReponse(nouvel, token, jwtProperties.getExpirationMinutes());
     }
 
     // ------------------------------------------------------------------
@@ -93,16 +96,14 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse connecter(LoginRequest requete) {
-        // AuthenticationManager → DaoAuthenticationProvider → UserDetailsServiceImpl
-        // Les erreurs (BadCredentials, Disabled, etc.) remontent en tant qu'exceptions Spring Security
-        // et seront traduites en 401 par le GestionnaireExceptions (à venir au commit 04).
+
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(requete.login(), requete.motDePasse())
         );
 
         UtilisateurPrincipal principal = (UtilisateurPrincipal) auth.getPrincipal();
         String token = jwtService.genererToken(principal);
-        return construireReponse(principal.getUtilisateur(), token);
+        return authMapper.versReponse(principal.getUtilisateur(), token, jwtProperties.getExpirationMinutes());
     }
 
     // ------------------------------------------------------------------
@@ -139,15 +140,5 @@ public class AuthService {
         }
     }
 
-    private AuthResponse construireReponse(Utilisateur utilisateur, String token) {
-        return new AuthResponse(
-                token,
-                utilisateur.getMatricule(),
-                utilisateur.getEmail(),
-                utilisateur.getNom(),
-                utilisateur.getPrenom(),
-                utilisateur.getRole(),
-                jwtProperties.getExpirationMinutes()
-        );
-    }
+
 }

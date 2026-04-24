@@ -5,6 +5,7 @@ import be.ephec.padelmanager.dto.auth.LoginRequest;
 import be.ephec.padelmanager.dto.auth.RegisterRequest;
 import be.ephec.padelmanager.entity.RoleUtilisateur;
 import be.ephec.padelmanager.entity.Utilisateur;
+import be.ephec.padelmanager.mapper.AuthMapper;
 import be.ephec.padelmanager.repository.UtilisateurRepository;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.security.jwt.JwtProperties;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,7 @@ class AuthServiceTest {
     @Mock private AuthenticationManager authenticationManager;
     @Mock private JwtService jwtService;
     @Mock private JwtProperties jwtProperties;
+    @Mock private AuthMapper authMapper;
 
     @InjectMocks
     private AuthService authService;
@@ -47,8 +50,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("Inscription MEMBRE_LIBRE → matricule généré avec préfixe L + token émis")
     void inscriptionMembreLibreReussit() {
-        when(jwtProperties.getExpirationMinutes()).thenReturn(60L);
-
         RegisterRequest req = new RegisterRequest(
                 "Dupont", "Jean", "jean@example.com", "+32475123456",
                 "motdepasse123", RoleUtilisateur.MEMBRE_LIBRE, null
@@ -63,19 +64,27 @@ class AuthServiceTest {
                     return u;
                 });
         when(jwtService.genererToken(any())).thenReturn("fake.jwt.token");
+        when(jwtProperties.getExpirationMinutes()).thenReturn(60L);
+
+        AuthResponse reponseAttendue = new AuthResponse(
+                "fake.jwt.token", "L000000", "jean@example.com",
+                "Dupont", "Jean", RoleUtilisateur.MEMBRE_LIBRE, 60L
+        );
+        when(authMapper.versReponse(any(Utilisateur.class), eq("fake.jwt.token"), eq(60L)))
+                .thenReturn(reponseAttendue);
 
         AuthResponse reponse = authService.inscrire(req);
 
+        // Vérifications sur l'entité effectivement sauvegardée (logique métier d'AuthService)
         ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
         verify(utilisateurRepository).save(captor.capture());
         Utilisateur sauve = captor.getValue();
-
         assertThat(sauve.getMatricule()).matches("^L\\d{6}$");
         assertThat(sauve.getPasswordHash()).isEqualTo("$2a$10$hash");
         assertThat(sauve.getActive()).isTrue();
-        assertThat(reponse.token()).isEqualTo("fake.jwt.token");
-        assertThat(reponse.role()).isEqualTo(RoleUtilisateur.MEMBRE_LIBRE);
-        assertThat(reponse.expirationMinutes()).isEqualTo(60L);
+
+        // Vérification que la réponse vient bien du mapper
+        assertThat(reponse).isSameAs(reponseAttendue);
     }
 
     // -------- Inscription : règles de sécurité --------
@@ -142,8 +151,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("Connexion valide → token émis avec matricule et rôle")
     void connexionReussie() {
-        when(jwtProperties.getExpirationMinutes()).thenReturn(60L);
-
         LoginRequest req = new LoginRequest("jean@example.com", "motdepasse123");
 
         Utilisateur u = Utilisateur.builder()
@@ -159,11 +166,17 @@ class AuthServiceTest {
         );
         when(authenticationManager.authenticate(any())).thenReturn(authResult);
         when(jwtService.genererToken(principal)).thenReturn("fake.jwt.token");
+        when(jwtProperties.getExpirationMinutes()).thenReturn(60L);
+
+        AuthResponse reponseAttendue = new AuthResponse(
+                "fake.jwt.token", "G000001", "jean@example.com",
+                "Dupont", "Jean", RoleUtilisateur.MEMBRE_GLOBAL, 60L
+        );
+        when(authMapper.versReponse(u, "fake.jwt.token", 60L))
+                .thenReturn(reponseAttendue);
 
         AuthResponse reponse = authService.connecter(req);
 
-        assertThat(reponse.token()).isEqualTo("fake.jwt.token");
-        assertThat(reponse.matricule()).isEqualTo("G000001");
-        assertThat(reponse.role()).isEqualTo(RoleUtilisateur.MEMBRE_GLOBAL);
+        assertThat(reponse).isSameAs(reponseAttendue);
     }
 }
