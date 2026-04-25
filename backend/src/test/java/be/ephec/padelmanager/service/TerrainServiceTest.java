@@ -68,7 +68,7 @@ class TerrainServiceTest {
     }
 
     @Test
-    @DisplayName("Création terrain numéro déjà pris → IllegalArgumentException (CF-RS-006)")
+    @DisplayName("Création terrain numéro déjà pris → IllegalArgumentException")
     void creerRefuseNumeroDuplique() {
         Site site = Site.builder().id(1L).build();
         CreateTerrainRequest req = new CreateTerrainRequest(1, null);
