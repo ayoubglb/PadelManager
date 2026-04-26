@@ -49,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        // Lecture publique des sites et terrains (page d'accueil)
+                        .requestMatchers(HttpMethod.GET, "/sites", "/sites/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sites/*/terrains").permitAll()
                         // Tout le reste nécessite une authentification
                         .anyRequest().authenticated()
                 )
