@@ -9,9 +9,11 @@
       Fichier master Liquibase : point d'entrée des migrations de schéma.
       Chaque nouveau fichier de changesets doit être inclus ici dans l'ordre chronologique.
     -->
-
-    <include file="db/changelog/changes/001-initial.sql"/>
-    <include file="/db/changelog/changes/002-utilisateur-table.sql"/>
-    <include file="db/changelog/changes/003-seed-utilisateurs.sql" relativeToChangelogFile="false"/>
-
+    <include file="db/changelog/changes/001-initial.sql"                  relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/002-utilisateur-table.sql"        relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/003-seed-utilisateurs.sql"        relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/004-sites-terrains-horaires.sql"  relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/005-fk-utilisateur-site.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/006-seed-sites-dev.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/007-seed-utilisateurs-site-dev.sql" relativeToChangelogFile="false"/>
 </databaseChangeLog>

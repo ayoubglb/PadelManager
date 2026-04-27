@@ -6,6 +6,7 @@ import be.ephec.padelmanager.dto.auth.RegisterRequest;
 import be.ephec.padelmanager.entity.RoleUtilisateur;
 import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.mapper.AuthMapper;
+import be.ephec.padelmanager.repository.SiteRepository;
 import be.ephec.padelmanager.repository.UtilisateurRepository;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.security.jwt.JwtProperties;
@@ -41,6 +42,7 @@ class AuthServiceTest {
     @Mock private JwtService jwtService;
     @Mock private JwtProperties jwtProperties;
     @Mock private AuthMapper authMapper;
+    @Mock private SiteRepository siteRepository;
 
     @InjectMocks
     private AuthService authService;
