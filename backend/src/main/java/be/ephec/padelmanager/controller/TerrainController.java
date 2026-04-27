@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import be.ephec.padelmanager.security.UtilisateurPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -47,10 +49,12 @@ public class TerrainController {
     @PostMapping("/sites/{siteId}/terrains")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
     @Operation(summary = "Création d'un terrain dans un site (CF-RS-005)")
-    public ResponseEntity<TerrainDTO> creer(@PathVariable Long siteId,
-                                            @Valid @RequestBody CreateTerrainRequest requete) {
+    public ResponseEntity<TerrainDTO> creer(
+            @PathVariable Long siteId,
+            @Valid @RequestBody CreateTerrainRequest requete,
+            @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(terrainService.creer(siteId, requete));
+                .body(terrainService.creer(siteId, requete, principal.getUtilisateur()));
     }
 
     // -------- Opérations individuelles sous /terrains/{id} --------
@@ -64,22 +68,28 @@ public class TerrainController {
     @PutMapping("/terrains/{id}")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
     @Operation(summary = "Mise à jour d'un terrain")
-    public TerrainDTO mettreAJour(@PathVariable Long id,
-                                  @Valid @RequestBody UpdateTerrainRequest requete) {
-        return terrainService.mettreAJour(id, requete);
+    public TerrainDTO mettreAJour(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTerrainRequest requete,
+            @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return terrainService.mettreAJour(id, requete, principal.getUtilisateur());
     }
 
     @PutMapping("/terrains/{id}/activer")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
     @Operation(summary = "Réactivation d'un terrain désactivé")
-    public TerrainDTO activer(@PathVariable Long id) {
-        return terrainService.activer(id);
+    public TerrainDTO activer(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return terrainService.activer(id, principal.getUtilisateur());
     }
 
     @DeleteMapping("/terrains/{id}")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
     @Operation(summary = "Désactivation d'un terrain (maintenance)")
-    public TerrainDTO desactiver(@PathVariable Long id) {
-        return terrainService.desactiver(id);
+    public TerrainDTO desactiver(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return terrainService.desactiver(id, principal.getUtilisateur());
     }
 }
