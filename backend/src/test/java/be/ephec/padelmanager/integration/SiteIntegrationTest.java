@@ -50,13 +50,14 @@ class SiteIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /sites sans authentification → 403 Forbidden")
+    @DisplayName("POST /sites sans authentification → 403 avec corps d'erreur")
     void postSiteSansAuthRefuse() throws Exception {
         CreateSiteRequest req = new CreateSiteRequest("NewSite", "Rue X", "1000", "Bruxelles");
         mockMvc.perform(post("/sites")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
     @Test
