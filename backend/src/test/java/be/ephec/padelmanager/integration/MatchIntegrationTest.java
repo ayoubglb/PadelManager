@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,15 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Tests d'intégration de bout en bout pour la création de match (EF-MB-004).
- *
- * <p>Couvre le chemin complet : authentification JWT → contrôleur → service avec validations
- * CF-RV-002 à CF-RV-011 → persistance atomique de Match + InscriptionMatch + Transaction.</p>
- *
- * <p>Utilise le compte seed {@code S200001} (MEMBRE_SITE rattaché à Anderlecht) pour pouvoir
- * tester les règles d'autorisation par ressource et le délai de réservation à 14 jours.</p>
- */
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -48,13 +41,15 @@ class MatchIntegrationTest {
             "mcr.microsoft.com/mssql/server:2022-latest").acceptLicense();
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
     @Autowired private MatchRepository matchRepository;
     @Autowired private InscriptionMatchRepository inscriptionMatchRepository;
     @Autowired private TransactionRepository transactionRepository;
     @Autowired private UtilisateurRepository utilisateurRepository;
     @Autowired private TerrainRepository terrainRepository;
     @Autowired private AuthService authService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     private static final String EMAIL_MEMBRE_SITE = "membre.site@padelmanager.be";
     private static final String PASSWORD_MEMBRE_SITE = "Dev2026!";
