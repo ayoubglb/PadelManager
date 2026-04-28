@@ -12,7 +12,7 @@ VALUES
      '$2a$10$o96jRtX3ZqXqZ9.H0.Si8e74k2wSEnkjPIK.DGSyPqTI3jycA9JkW', 'ADMIN_GLOBAL',  NULL, 1, SYSUTCDATETIME()),
 
     ('G100001',  'Membre', 'Global', 'membre.global@padelmanager.be', '+32475000003',
-     '$2a$10$M4ylgr8Ot1wDRAcWbJnHwOjF7pIymXVezdsUi1uASbipZF9oNZUsy!',   'MEMBRE_GLOBAL', NULL, 1, SYSUTCDATETIME()),
+     '$2a$10$M4ylgr8Ot1wDRAcWbJnHwOjF7pIymXVezdsUi1uASbipZF9oNZUsy',   'MEMBRE_GLOBAL', NULL, 1, SYSUTCDATETIME()),
 
     ('L100001',  'Membre', 'Libre',  'membre.libre@padelmanager.be',  '+32475000005',
      '$2a$10$M4ylgr8Ot1wDRAcWbJnHwOjF7pIymXVezdsUi1uASbipZF9oNZUsy',   'MEMBRE_LIBRE',  NULL, 1, SYSUTCDATETIME());
