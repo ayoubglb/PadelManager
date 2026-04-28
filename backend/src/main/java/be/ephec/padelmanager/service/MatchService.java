@@ -17,21 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-/**
- * Service métier pour la gestion des matchs.
- *
- * <p>La méthode {@link #creerMatch(CreateMatchRequest, Utilisateur)} orchestre toutes les
- * validations CF-RV-002 à CF-RV-011 dans une seule transaction atomique (8.3.5 de l'analyse).
- * Si une seule validation échoue, rollback complet : ni Match, ni InscriptionMatch, ni
- * Transaction ne sont créés.</p>
- *
- * <p>L'ordre des validations privilégie l'échec rapide : on vérifie d'abord les règles
- * statiques (rôle, dates) avant tout accès en base.</p>
- *
- * <p><b>Note :</b> la vérification de pénalité active (CF-RV-010) sera ajoutée au commit 12
- * quand l'entité {@code Penalite} sera créée. Idem pour la vérification jour de fermeture
- * et horaires de site, on suppose les données présentes en base via les seeds 006/007.</p>
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
