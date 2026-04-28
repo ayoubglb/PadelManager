@@ -5,9 +5,11 @@ import be.ephec.padelmanager.dto.site.TerrainDTO;
 import be.ephec.padelmanager.dto.site.UpdateTerrainRequest;
 import be.ephec.padelmanager.entity.Site;
 import be.ephec.padelmanager.entity.Terrain;
+import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.mapper.TerrainMapper;
 import be.ephec.padelmanager.repository.SiteRepository;
 import be.ephec.padelmanager.repository.TerrainRepository;
+import be.ephec.padelmanager.security.AutorisationSite;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class TerrainService {
     private final TerrainRepository terrainRepository;
     private final SiteRepository siteRepository;
     private final TerrainMapper terrainMapper;
+    private final AutorisationSite autorisationSite;
 
     // ------------------------------------------------------------------
     // Lecture
@@ -57,7 +60,9 @@ public class TerrainService {
     // ------------------------------------------------------------------
 
     @Transactional
-    public TerrainDTO creer(Long siteId, CreateTerrainRequest requete) {
+    public TerrainDTO creer(Long siteId, CreateTerrainRequest requete, Utilisateur utilisateurCourant) {
+        autorisationSite.verifierDroitsSurSite(utilisateurCourant, siteId);
+
         Site site = siteRepository.findById(siteId)
                 .orElseThrow(() -> new EntityNotFoundException("Site introuvable : id=" + siteId));
 
@@ -77,10 +82,10 @@ public class TerrainService {
     }
 
     @Transactional
-    public TerrainDTO mettreAJour(Long id, UpdateTerrainRequest requete) {
+    public TerrainDTO mettreAJour(Long id, UpdateTerrainRequest requete, Utilisateur utilisateurCourant) {
         Terrain terrain = chargerOuLever(id);
+        autorisationSite.verifierDroitsSurSite(utilisateurCourant, terrain.getSite().getId());
 
-        // si le numéro change, vérifier qu'il n'est pas déjà pris sur ce site
         if (terrainRepository.existsBySiteIdAndNumeroAndIdNot(
                 terrain.getSite().getId(), requete.numero(), id)) {
             throw new IllegalArgumentException(
@@ -94,16 +99,20 @@ public class TerrainService {
     }
 
     @Transactional
-    public TerrainDTO activer(Long id) {
+    public TerrainDTO activer(Long id, Utilisateur utilisateurCourant) {
         Terrain terrain = chargerOuLever(id);
+        autorisationSite.verifierDroitsSurSite(utilisateurCourant, terrain.getSite().getId());
+
         terrain.setActive(true);
         log.info("Terrain activé : id={}", id);
         return terrainMapper.versDTO(terrain);
     }
 
     @Transactional
-    public TerrainDTO desactiver(Long id) {
+    public TerrainDTO desactiver(Long id, Utilisateur utilisateurCourant) {
         Terrain terrain = chargerOuLever(id);
+        autorisationSite.verifierDroitsSurSite(utilisateurCourant, terrain.getSite().getId());
+
         terrain.setActive(false);
         log.info("Terrain désactivé : id={}", id);
         return terrainMapper.versDTO(terrain);

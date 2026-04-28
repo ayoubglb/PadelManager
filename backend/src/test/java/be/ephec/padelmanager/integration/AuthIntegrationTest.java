@@ -106,22 +106,22 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @DisplayName("Register email déjà utilisé → exception métier levée par le service")
+    @DisplayName("Register email déjà utilisé → 400 Bad Request avec corps d'erreur")
     void registerEmailDupliqueRejete() throws Exception {
         RegisterRequest doublon = new RegisterRequest(
-                "Autre", "Personne", "admin.global@padelmanager.be", "+32475999002",
-                "motdepasse123", RoleUtilisateur.MEMBRE_LIBRE, null
-        );
-        jakarta.servlet.ServletException exception = org.junit.jupiter.api.Assertions.assertThrows(
-                jakarta.servlet.ServletException.class,
-                () -> mockMvc.perform(post("/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(doublon)))
+                "Autre", "Personne",
+                "admin.global@padelmanager.be",   // email existant en seed
+                "+32475999002",
+                "motdepasse123",
+                RoleUtilisateur.MEMBRE_LIBRE,
+                null
         );
 
-        org.assertj.core.api.Assertions.assertThat(exception)
-                .rootCause()
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("existe déjà");
+        mockMvc.perform(post("/auth/register")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(doublon)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATED"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("existe déjà")));
     }
 }
