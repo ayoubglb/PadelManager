@@ -39,4 +39,13 @@ public interface JourFermetureRepository extends JpaRepository<JourFermeture, Lo
           AND (j.site IS NULL OR j.site.id = :siteId)
         """)
     boolean estFermeAUneDate(@Param("siteId") Long siteId, @Param("date") LocalDate date);
+
+    @Query("""
+    SELECT CASE WHEN COUNT(j) > 0 THEN true ELSE false END
+    FROM JourFermeture j
+    WHERE j.dateFermeture = :date
+      AND (j.site IS NULL OR j.site.id = :siteId)
+    """)
+    boolean existsByDateAndSiteIdOrSiteIsNull(@Param("date") LocalDate date,
+                                              @Param("siteId") Long siteId);
 }
