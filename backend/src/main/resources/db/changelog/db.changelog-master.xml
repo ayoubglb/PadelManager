@@ -16,4 +16,7 @@
     <include file="db/changelog/changes/005-fk-utilisateur-site.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/006-seed-sites-dev.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/007-seed-utilisateurs-site-dev.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/008-create-match-table.sql" relativeToChangelogFile="false"/>
+
+
 </databaseChangeLog>
