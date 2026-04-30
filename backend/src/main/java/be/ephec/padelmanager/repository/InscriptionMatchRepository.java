@@ -46,4 +46,15 @@ public interface InscriptionMatchRepository extends JpaRepository<InscriptionMat
         """)
     List<InscriptionMatch> findUnpaidUpcomingWithin(@Param("debut") LocalDateTime debut,
                                                     @Param("fin") LocalDateTime fin);
+
+    // Compte le nombre d'inscrits payés par match, pour une liste de matchs
+    @Query("""
+        SELECT i.match.id, COUNT(i)
+        FROM InscriptionMatch i
+        WHERE i.match.id IN :matchIds
+          AND i.paye = true
+          AND i.statut = be.ephec.padelmanager.entity.StatutInscription.INSCRIT
+        GROUP BY i.match.id
+        """)
+    List<Object[]> countJoueursPayesByMatchIdIn(@Param("matchIds") List<Long> matchIds);
 }
