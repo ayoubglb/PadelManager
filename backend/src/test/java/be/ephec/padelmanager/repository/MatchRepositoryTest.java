@@ -133,10 +133,14 @@ class MatchRepositoryTest {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime limite = now.plusDays(7);
 
-        Match prive = creer(now.plusDays(3), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
-        creer(now.plusDays(3), TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);          // exclu : type
-        creer(now.plusDays(3), TypeMatch.PRIVE, StatutMatch.PROGRAMME, true);            // exclu : déjà converti
-        creer(now.plusDays(10), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);          // exclu : hors fenêtre
+        Match prive = creer(now.plusDays(3).withHour(10).withMinute(0),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+        creer(now.plusDays(3).withHour(12).withMinute(0),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);          // exclu : type
+        creer(now.plusDays(3).withHour(14).withMinute(0),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, true);            // exclu : déjà converti
+        creer(now.plusDays(10).withHour(10).withMinute(0),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);           // exclu : hors fenêtre
 
         List<Match> resultats = matchRepository.findPrivesAConvertir(now, limite);
 
