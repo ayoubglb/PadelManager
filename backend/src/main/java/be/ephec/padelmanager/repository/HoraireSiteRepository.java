@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface HoraireSiteRepository extends JpaRepository<HoraireSite, Long> {
+public interface    HoraireSiteRepository extends JpaRepository<HoraireSite, Long> {
 
     // Récent preums
     List<HoraireSite> findBySiteIdOrderByAnneeDesc(Long siteId);
