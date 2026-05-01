@@ -58,6 +58,7 @@ class MatchRepositoryTest {
         organisateur = em.persistAndFlush(Utilisateur.builder()
                 .matricule("L999200")
                 .email("orga.match@padelmanager.be")
+                .telephone("0000000000")
                 .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
                 .nom("Orga").prenom("Match")
                 .role(RoleUtilisateur.MEMBRE_LIBRE)

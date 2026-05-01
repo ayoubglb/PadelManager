@@ -78,6 +78,7 @@ class InscriptionMatchRepositoryTest {
         return em.persistAndFlush(Utilisateur.builder()
                 .matricule(matricule)
                 .email(email)
+                .telephone("0000000000")
                 .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
                 .nom("Test").prenom(matricule)
                 .role(RoleUtilisateur.MEMBRE_LIBRE)

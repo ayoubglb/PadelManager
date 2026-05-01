@@ -52,6 +52,7 @@ class UtilisateurRepositoryTest {
         utilisateur = em.persistAndFlush(Utilisateur.builder()
                 .matricule("L999100")
                 .email("repo.test@padelmanager.be")
+                .telephone("0000000000")
                 .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
                 .nom("Repo").prenom("Test")
                 .role(RoleUtilisateur.MEMBRE_LIBRE)
