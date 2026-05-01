@@ -4,17 +4,22 @@ import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
+import be.ephec.padelmanager.dto.match.MatchPublicDTO;
 import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.service.MatchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.time.LocalDate;
+import java.util.List;
 
 
 @RestController
@@ -56,6 +61,20 @@ public class MatchController {
     ) {
         TransactionDTO transaction = matchService.payerSaPart(id, principal.getUtilisateur());
         return ResponseEntity.ok(transaction);
+    }
+
+    // Catalogue des matchs publics avec filtres optionnels
+    @GetMapping("/publics")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<List<MatchPublicDTO>> rechercherMatchsPublics(
+            @RequestParam(required = false) Long siteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestParam(required = false) Integer placesMin
+    ) {
+        List<MatchPublicDTO> resultats = matchService.rechercherMatchsPublics(
+                siteId, dateDebut, dateFin, placesMin);
+        return ResponseEntity.ok(resultats);
     }
 
 }

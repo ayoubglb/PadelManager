@@ -182,4 +182,116 @@ class MatchRepositoryTest {
 
         assertThat(resultats).extracting(Match::getId).doesNotContain(annule.getId());
     }
+    // ─── rechercherPublics (match) ────────────────────────
+
+    @Test
+    @DisplayName("rechercherPublics ne retourne que les PUBLIC PROGRAMME futurs")
+    void rechercherPublicsFiltreTypeEtStatut() {
+        LocalDateTime futur = LocalDateTime.now().plusDays(5);
+
+        Match publicProgramme = creer(futur,
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+        creer(futur.plusHours(2), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);   // exclu : PRIVE
+        creer(futur.plusHours(4), TypeMatch.PUBLIC, StatutMatch.ANNULE, false);    // exclu : ANNULE
+
+        List<Match> resultats = matchRepository.rechercherPublics(
+                LocalDateTime.now(), null, null);
+
+        assertThat(resultats).extracting(Match::getId).contains(publicProgramme.getId());
+        assertThat(resultats).allMatch(m -> m.getType() == TypeMatch.PUBLIC);
+        assertThat(resultats).allMatch(m -> m.getStatut() == StatutMatch.PROGRAMME);
+    }
+
+    @Test
+    @DisplayName("rechercherPublics filtre les matchs avant dateDebut")
+    void rechercherPublicsFiltreDateDebut() {
+        LocalDateTime dansUneSemaine = LocalDateTime.now().plusDays(7);
+        LocalDateTime dansDeuxSemaines = LocalDateTime.now().plusDays(14);
+
+        Match horsFenetre = creer(dansUneSemaine,
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+        Match dansFenetre = creer(dansDeuxSemaines,
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        // dateDebut = dans 10 jours → exclut horsFenetre
+        List<Match> resultats = matchRepository.rechercherPublics(
+                LocalDateTime.now().plusDays(10), null, null);
+
+        assertThat(resultats).extracting(Match::getId)
+                .contains(dansFenetre.getId())
+                .doesNotContain(horsFenetre.getId());
+    }
+
+    @Test
+    @DisplayName("rechercherPublics filtre les matchs après dateFin")
+    void rechercherPublicsFiltreDateFin() {
+        LocalDateTime dansUneSemaine = LocalDateTime.now().plusDays(7);
+        LocalDateTime dansTroisSemaines = LocalDateTime.now().plusDays(21);
+
+        Match dansFenetre = creer(dansUneSemaine,
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+        Match horsFenetre = creer(dansTroisSemaines,
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        // dateFin = dans 14 jours → exclut horsFenetre
+        List<Match> resultats = matchRepository.rechercherPublics(
+                LocalDateTime.now(), LocalDateTime.now().plusDays(14), null);
+
+        assertThat(resultats).extracting(Match::getId)
+                .contains(dansFenetre.getId())
+                .doesNotContain(horsFenetre.getId());
+    }
+
+    @Test
+    @DisplayName("rechercherPublics avec siteId null retourne tous les sites")
+    void rechercherPublicsSansFiltreSite() {
+        Match m = creer(LocalDateTime.now().plusDays(5),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        List<Match> resultats = matchRepository.rechercherPublics(
+                LocalDateTime.now(), null, null);
+
+        assertThat(resultats).extracting(Match::getId).contains(m.getId());
+    }
+
+    @Test
+    @DisplayName("rechercherPublics avec siteId précisé filtre bien")
+    void rechercherPublicsFiltreSite() {
+        Match m = creer(LocalDateTime.now().plusDays(5),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        // Le terrain du test est sur le site 1 → siteId=1 doit le retourner
+        List<Match> resultatsSite1 = matchRepository.rechercherPublics(
+                LocalDateTime.now(), null, 1L);
+        assertThat(resultatsSite1).extracting(Match::getId).contains(m.getId());
+
+        // siteId=2 → ne doit pas retourner ce match
+        List<Match> resultatsSite2 = matchRepository.rechercherPublics(
+                LocalDateTime.now(), null, 2L);
+        assertThat(resultatsSite2).extracting(Match::getId).doesNotContain(m.getId());
+    }
+
+    @Test
+    @DisplayName("rechercherPublics retourne les résultats triés par date croissante")
+    void rechercherPublicsTrieParDateAsc() {
+        Match plusTard = creer(LocalDateTime.now().plusDays(10),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+        Match plusTot = creer(LocalDateTime.now().plusDays(3),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+        Match moyen = creer(LocalDateTime.now().plusDays(7),
+                TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        List<Match> resultats = matchRepository.rechercherPublics(
+                LocalDateTime.now(), null, null);
+
+        // Filtre uniquement nos 3 matchs (la DB peut contenir d'autres données du seed)
+        List<Match> nos3 = resultats.stream()
+                .filter(m -> List.of(plusTot.getId(), moyen.getId(), plusTard.getId())
+                        .contains(m.getId()))
+                .toList();
+
+        assertThat(nos3).extracting(Match::getId)
+                .containsExactly(plusTot.getId(), moyen.getId(), plusTard.getId());
+    }
+
 }

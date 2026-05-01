@@ -4,6 +4,7 @@ import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
+import be.ephec.padelmanager.dto.match.MatchPublicDTO;
 import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.entity.*;
 import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
@@ -21,6 +22,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -342,6 +346,51 @@ public class MatchService {
             throw new IllegalArgumentException(
                     "Solde insuffisant pour payer votre part. Veuillez recharger votre compte.");
         }
+    }
+
+    // -------------------------------------------
+    // Recherche les matchs publics avec filtres pour le catalogue
+    @Transactional(readOnly = true)
+    public List<MatchPublicDTO> rechercherMatchsPublics(Long siteId,
+                                                        LocalDate dateDebut,
+                                                        LocalDate dateFin,
+                                                        Integer placesMin) {
+        LocalDateTime debut = dateDebut != null
+                ? dateDebut.atStartOfDay()
+                : LocalDateTime.now(clock);
+        LocalDateTime fin = dateFin != null ? dateFin.atTime(LocalTime.MAX) : null;
+        int placesMinEffectif = placesMin != null ? placesMin : 1;
+
+        List<Match> matchs = matchRepository.rechercherPublics(debut, fin, siteId);
+        if (matchs.isEmpty()) {
+            return List.of();
+        }
+
+        // Compte les joueurs payés par match (anti N+1)
+        List<Long> matchIds = matchs.stream().map(Match::getId).toList();
+        Map<Long, Integer> joueursPayesParMatch = inscriptionMatchRepository
+                .countJoueursPayesByMatchIdIn(matchIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()));
+
+        return matchs.stream()
+                .map(m -> {
+                    int payes = joueursPayesParMatch.getOrDefault(m.getId(), 0);
+                    int placesRestantes = PricingConstants.NB_JOUEURS_MAX - payes;
+                    return new MatchPublicDTO(
+                            m.getId(),
+                            m.getTerrain().getSite().getId(),
+                            m.getTerrain().getSite().getNom(),
+                            m.getTerrain().getNumero(),
+                            m.getDateHeureDebut(),
+                            m.getDateHeureFin(),
+                            m.getOrganisateur().getPrenom() + " " + m.getOrganisateur().getNom(),
+                            placesRestantes
+                    );
+                })
+                .filter(dto -> dto.placesRestantes() >= placesMinEffectif)
+                .toList();
     }
 
 
