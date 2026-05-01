@@ -80,7 +80,7 @@ public class PlanningService {
     private PlanningDTO planningOuvert(Site site, LocalDate date) {
         List<Terrain> terrains = terrainRepository
                 .findBySiteIdAndActiveTrueOrderByNumeroAsc(site.getId());
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(site.getId(), date.getYear());
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(site.getId(), date.getYear());
 
         List<Match> matchsDuJour = matchRepository.findBySiteAndPeriode(
                 site.getId(),
@@ -136,7 +136,7 @@ public class PlanningService {
 
     // Construit une ligne (un créneau) avec une cellule par terrain
     private LigneCreneauDTO construireLigne(
-            Creneau creneau, LocalDate date, List<Terrain> terrains,
+            CreneauDTO creneau, LocalDate date, List<Terrain> terrains,
             Map<String, Match> matchsParCle, Map<Long, Integer> joueursPayesParMatch
     ) {
         LocalDateTime debut = date.atTime(creneau.debut());

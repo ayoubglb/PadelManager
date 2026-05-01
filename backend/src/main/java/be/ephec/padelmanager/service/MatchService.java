@@ -1,9 +1,11 @@
 package be.ephec.padelmanager.service;
 
 import be.ephec.padelmanager.config.PricingConstants;
+import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.entity.*;
+import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
 import be.ephec.padelmanager.mapper.MatchMapper;
 import be.ephec.padelmanager.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -11,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -32,6 +35,8 @@ public class MatchService {
     private final SoldeService soldeService;
     private final MatchMapper matchMapper;
     private final Clock clock;
+    private final UtilisateurRepository utilisateurRepository;
+    private final InscriptionMatchMapper inscriptionMatchMapper;
 
     @Transactional
     public MatchDTO creerMatch(CreateMatchRequest requete, Utilisateur organisateur) {
@@ -188,4 +193,85 @@ public class MatchService {
                             + horaire.getHeureDebut() + " - " + horaire.getHeureFin() + ")");
         }
     }
+
+
+    // ------------------------------------------------------------------------------
+    // Invite un joueur à un match privé
+    @Transactional
+    public InscriptionMatchDTO inviterJoueur(Long matchId, String matriculeJoueur, Utilisateur organisateur) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new EntityNotFoundException("Match introuvable : " + matchId));
+
+        validerOrganisateur(match, organisateur);
+        validerMatchPriveProgramme(match);
+        validerPlacesRestantes(match);
+
+        Utilisateur joueur = utilisateurRepository.findByMatricule(matriculeJoueur)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Aucun utilisateur avec le matricule " + matriculeJoueur));
+
+        validerJoueurActif(joueur);
+        validerPasDejaInscrit(match, joueur);
+
+        InscriptionMatch inscription = InscriptionMatch.builder()
+                .match(match)
+                .joueur(joueur)
+                .paye(false)
+                .statut(StatutInscription.INSCRIT)
+                .estOrganisateur(false)
+                .build();
+
+        InscriptionMatch enregistree = inscriptionMatchRepository.save(inscription);
+
+        log.info("Joueur invité : match={}, joueur={}, organisateur={}",
+                match.getId(), joueur.getMatricule(), organisateur.getMatricule());
+
+        return inscriptionMatchMapper.toDto(enregistree);
+    }
+
+    // Refuse si l'utilisateur authentifié n'est pas l'organisateur du match
+    private void validerOrganisateur(Match match, Utilisateur utilisateur) {
+        if (!match.getOrganisateur().getId().equals(utilisateur.getId())) {
+            throw new AccessDeniedException(
+                    "Seul l'organisateur du match peut inviter des joueurs");
+        }
+    }
+
+    // Refuse si le match n'est pas privé ou pas programmé
+    private void validerMatchPriveProgramme(Match match) {
+        if (match.getType() != TypeMatch.PRIVE) {
+            throw new IllegalArgumentException(
+                    "Les invitations ne sont possibles que sur un match privé");
+        }
+        if (match.getStatut() != StatutMatch.PROGRAMME) {
+            throw new IllegalArgumentException(
+                    "Les invitations ne sont possibles que sur un match programmé");
+        }
+    }
+
+    // Refuse si le match a déjà 4 joueurs inscrits (max 4 joueurs)
+    private void validerPlacesRestantes(Match match) {
+        long inscrits = inscriptionMatchRepository.findInscritsByMatchId(match.getId()).size();
+        if (inscrits >= 4) {
+            throw new IllegalArgumentException(
+                    "Le match est complet (4 joueurs maximum)");
+        }
+    }
+
+    // Refuse si le joueur cible est désactivé
+    private void validerJoueurActif(Utilisateur joueur) {
+        if (Boolean.FALSE.equals(joueur.getActive())) {
+            throw new IllegalArgumentException(
+                    "Le joueur " + joueur.getMatricule() + " est désactivé");
+        }
+    }
+
+    // Refuse si le joueur est déjà inscrit au match
+    private void validerPasDejaInscrit(Match match, Utilisateur joueur) {
+        if (inscriptionMatchRepository.existsByMatchIdAndJoueurId(match.getId(), joueur.getId())) {
+            throw new IllegalArgumentException(
+                    "Le joueur " + joueur.getMatricule() + " est déjà inscrit à ce match");
+        }
+    }
+
 }
