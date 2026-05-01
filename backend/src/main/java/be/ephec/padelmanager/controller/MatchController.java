@@ -4,6 +4,7 @@ import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
+import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.service.MatchService;
 import jakarta.validation.Valid;
@@ -44,6 +45,17 @@ public class MatchController {
         InscriptionMatchDTO inscription = matchService.inviterJoueur(
                 id, requete.matricule(), principal.getUtilisateur());
         return ResponseEntity.status(HttpStatus.CREATED).body(inscription);
+    }
+
+    // Paye sa part d'un match privé
+    @PostMapping("/{id}/payer")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<TransactionDTO> payerSaPart(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        TransactionDTO transaction = matchService.payerSaPart(id, principal.getUtilisateur());
+        return ResponseEntity.ok(transaction);
     }
 
 }

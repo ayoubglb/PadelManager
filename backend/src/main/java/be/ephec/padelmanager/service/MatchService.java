@@ -4,9 +4,11 @@ import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
+import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.entity.*;
 import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
 import be.ephec.padelmanager.mapper.MatchMapper;
+import be.ephec.padelmanager.mapper.TransactionMapper;
 import be.ephec.padelmanager.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class MatchService {
     private final Clock clock;
     private final UtilisateurRepository utilisateurRepository;
     private final InscriptionMatchMapper inscriptionMatchMapper;
+    private final TransactionMapper transactionMapper;
 
     @Transactional
     public MatchDTO creerMatch(CreateMatchRequest requete, Utilisateur organisateur) {
@@ -273,5 +276,73 @@ public class MatchService {
                     "Le joueur " + joueur.getMatricule() + " est déjà inscrit à ce match");
         }
     }
+
+    // ----------------------------------------------------------------------------------------
+    // Paye sa part d'un match privé auquel on a été invité
+    @Transactional
+    public TransactionDTO payerSaPart(Long matchId, Utilisateur joueur) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new EntityNotFoundException("Match introuvable : " + matchId));
+
+        validerMatchPriveProgrammePourPaiement(match);
+
+        InscriptionMatch inscription = inscriptionMatchRepository
+                .findByMatchIdAndJoueurId(matchId, joueur.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Vous n'êtes pas inscrit à ce match"));
+
+        validerInscriptionPayable(inscription);
+        validerSoldeSuffisant(joueur);
+
+        // Création atomique : Transaction PAIEMENT_MATCH + maj inscription.paye
+        Transaction transaction = Transaction.builder()
+                .utilisateur(joueur)
+                .type(TypeTransaction.PAIEMENT_MATCH)
+                .montant(PricingConstants.PART_JOUEUR)
+                .match(match)
+                .build();
+        transaction = transactionRepository.save(transaction);
+
+        inscription.setPaye(true);
+        inscriptionMatchRepository.save(inscription);
+
+        log.info("Part payée : match={}, joueur={}, montant={}€",
+                match.getId(), joueur.getMatricule(), PricingConstants.PART_JOUEUR);
+
+        return transactionMapper.toDto(transaction);
+    }
+
+    // Refuse si le match n'est pas privé ou pas programmé
+    private void validerMatchPriveProgrammePourPaiement(Match match) {
+        if (match.getType() != TypeMatch.PRIVE) {
+            throw new IllegalArgumentException(
+                    "Le paiement de part s'applique uniquement aux matchs privés");
+        }
+        if (match.getStatut() != StatutMatch.PROGRAMME) {
+            throw new IllegalArgumentException(
+                    "Le paiement n'est possible que sur un match programmé");
+        }
+    }
+
+    // Refuse si l'organisateur tente de payer (déjà payé à la création) ou si déjà payé
+    private void validerInscriptionPayable(InscriptionMatch inscription) {
+        if (Boolean.TRUE.equals(inscription.getEstOrganisateur())) {
+            throw new IllegalArgumentException(
+                    "L'organisateur a déjà payé sa part lors de la création du match");
+        }
+        if (Boolean.TRUE.equals(inscription.getPaye())) {
+            throw new IllegalArgumentException(
+                    "Vous avez déjà payé votre part pour ce match");
+        }
+    }
+
+    // Refuse si le solde est insuffisant pour 15€
+    private void validerSoldeSuffisant(Utilisateur joueur) {
+        if (!soldeService.disposeAuMoinsDe(joueur.getId(), PricingConstants.PART_JOUEUR)) {
+            throw new IllegalArgumentException(
+                    "Solde insuffisant pour payer votre part. Veuillez recharger votre compte.");
+        }
+    }
+
 
 }
