@@ -43,6 +43,10 @@ class TransactionRepositoryTest {
         registry.add("spring.datasource.url",      mssql::getJdbcUrl);
         registry.add("spring.datasource.username", mssql::getUsername);
         registry.add("spring.datasource.password", mssql::getPassword);
+        // Override Liquibase credentials pour qu'il utilise sa/password du container
+        registry.add("spring.liquibase.url",      mssql::getJdbcUrl);
+        registry.add("spring.liquibase.user",     mssql::getUsername);
+        registry.add("spring.liquibase.password", mssql::getPassword);
     }
 
     @Autowired private TestEntityManager em;
