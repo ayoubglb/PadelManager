@@ -89,7 +89,7 @@ class TransactionRepositoryTest {
                 .build());
     }
 
-    // ─── calculerSoldeUtilisateur (CF-RC-003) ────────────────────────────
+    // ─── calculerSoldeUtilisateur  ────────────────────────────
 
     @Test
     @DisplayName("calculerSoldeUtilisateur sans aucune transaction → 0")
@@ -147,7 +147,7 @@ class TransactionRepositoryTest {
         assertThat(solde).isEqualByComparingTo("50.00");
     }
 
-    // ─── existsSoldeDuOrganisateurForMatch (anti-doublon EF-SYS-003) ────
+    // ─── existsSoldeDuOrganisateurForMatch ────
 
     @Test
     @DisplayName("existsSoldeDuOrganisateurForMatch → false si aucun SOLDE_DU pour le match")
@@ -169,7 +169,7 @@ class TransactionRepositoryTest {
         assertThat(existe).isTrue();
     }
 
-    // ─── calculerCaBrut (reporting commit 14) ───────────────────────────
+    // ─── calculerCaBrut  ───────────────────────────
 
     @Test
     @DisplayName("calculerCaBrut additionne PAIEMENT_MATCH et SOLDE_DU dans la période")
@@ -198,7 +198,7 @@ class TransactionRepositoryTest {
         assertThat(ca).isEqualByComparingTo("0");
     }
 
-    // ─── calculerTotalRemboursements (reporting commit 14) ──────────────
+    // ─── calculerTotalRemboursements  ──────────────
 
     @Test
     @DisplayName("calculerTotalRemboursements somme uniquement les REMBOURSEMENT")
