@@ -1,6 +1,6 @@
 package be.ephec.padelmanager.service;
 
-import be.ephec.padelmanager.dto.planning.Creneau;
+import be.ephec.padelmanager.dto.planning.CreneauDTO;
 import be.ephec.padelmanager.entity.HoraireSite;
 import be.ephec.padelmanager.repository.HoraireSiteRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,15 +24,15 @@ public class GenerateurCreneau {
 
     // Retourne les créneaux possibles pour un site et une année, ou liste vide si aucun horaire défini
     @Transactional(readOnly = true)
-    public List<Creneau> genererCreneaux(Long siteId, int annee) {
+    public List<CreneauDTO> genererCreneaux(Long siteId, int annee) {
         return horaireSiteRepository.findBySiteIdAndAnnee(siteId, annee)
                 .map(this::genererCreneauxDepuisHoraire)
                 .orElseGet(List::of);
     }
 
     // Itère depuis heureDebut, ajoute des créneaux de 1h30 séparés par 15 min, tant que fin ≤ heureFin
-    private List<Creneau> genererCreneauxDepuisHoraire(HoraireSite horaire) {
-        List<Creneau> creneaux = new ArrayList<>();
+    private List<CreneauDTO> genererCreneauxDepuisHoraire(HoraireSite horaire) {
+        List<CreneauDTO> creneaux = new ArrayList<>();
         LocalTime curseur = horaire.getHeureDebut();
         LocalTime borneFin = horaire.getHeureFin();
 
@@ -41,7 +41,7 @@ public class GenerateurCreneau {
             if (finCreneau.isAfter(borneFin)) {
                 break;
             }
-            creneaux.add(new Creneau(curseur, finCreneau));
+            creneaux.add(new CreneauDTO(curseur, finCreneau));
             curseur = finCreneau.plus(PAUSE_ENTRE_MATCHS);
         }
 

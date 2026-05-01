@@ -1,6 +1,6 @@
 package be.ephec.padelmanager.service;
 
-import be.ephec.padelmanager.dto.planning.Creneau;
+import be.ephec.padelmanager.dto.planning.CreneauDTO;
 import be.ephec.padelmanager.entity.HoraireSite;
 import be.ephec.padelmanager.entity.Site;
 import be.ephec.padelmanager.repository.HoraireSiteRepository;
@@ -44,17 +44,17 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.of(horairePour(LocalTime.of(8, 0), LocalTime.of(22, 0))));
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).containsExactly(
-                new Creneau(LocalTime.of(8, 0),  LocalTime.of(9, 30)),
-                new Creneau(LocalTime.of(9, 45), LocalTime.of(11, 15)),
-                new Creneau(LocalTime.of(11, 30), LocalTime.of(13, 0)),
-                new Creneau(LocalTime.of(13, 15), LocalTime.of(14, 45)),
-                new Creneau(LocalTime.of(15, 0), LocalTime.of(16, 30)),
-                new Creneau(LocalTime.of(16, 45), LocalTime.of(18, 15)),
-                new Creneau(LocalTime.of(18, 30), LocalTime.of(20, 0)),
-                new Creneau(LocalTime.of(20, 15), LocalTime.of(21, 45))
+                new CreneauDTO(LocalTime.of(8, 0),  LocalTime.of(9, 30)),
+                new CreneauDTO(LocalTime.of(9, 45), LocalTime.of(11, 15)),
+                new CreneauDTO(LocalTime.of(11, 30), LocalTime.of(13, 0)),
+                new CreneauDTO(LocalTime.of(13, 15), LocalTime.of(14, 45)),
+                new CreneauDTO(LocalTime.of(15, 0), LocalTime.of(16, 30)),
+                new CreneauDTO(LocalTime.of(16, 45), LocalTime.of(18, 15)),
+                new CreneauDTO(LocalTime.of(18, 30), LocalTime.of(20, 0)),
+                new CreneauDTO(LocalTime.of(20, 15), LocalTime.of(21, 45))
         );
     }
 
@@ -64,11 +64,11 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.of(horairePour(LocalTime.of(8, 0), LocalTime.of(21, 45))));
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).hasSize(8);
         assertThat(creneaux.get(creneaux.size() - 1))
-                .isEqualTo(new Creneau(LocalTime.of(20, 15), LocalTime.of(21, 45)));
+                .isEqualTo(new CreneauDTO(LocalTime.of(20, 15), LocalTime.of(21, 45)));
     }
 
     @Test
@@ -77,7 +77,7 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.of(horairePour(LocalTime.of(8, 0), LocalTime.of(9, 29))));
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).isEmpty();
     }
@@ -88,10 +88,10 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.of(horairePour(LocalTime.of(8, 0), LocalTime.of(9, 30))));
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).containsExactly(
-                new Creneau(LocalTime.of(8, 0), LocalTime.of(9, 30))
+                new CreneauDTO(LocalTime.of(8, 0), LocalTime.of(9, 30))
         );
     }
 
@@ -101,7 +101,7 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.empty());
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).isEmpty();
     }
@@ -112,10 +112,10 @@ class GenerateurCreneauTest {
         when(horaireSiteRepository.findBySiteIdAndAnnee(10L, 2026))
                 .thenReturn(Optional.of(horairePour(LocalTime.of(8, 0), LocalTime.of(9, 45))));
 
-        List<Creneau> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(10L, 2026);
 
         assertThat(creneaux).containsExactly(
-                new Creneau(LocalTime.of(8, 0), LocalTime.of(9, 30))
+                new CreneauDTO(LocalTime.of(8, 0), LocalTime.of(9, 30))
         );
     }
 }

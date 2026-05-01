@@ -6,6 +6,7 @@ import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.entity.*;
 import be.ephec.padelmanager.mapper.MatchMapper;
 import be.ephec.padelmanager.repository.*;
+import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,8 @@ class MatchServiceTest {
     @Mock private JourFermetureRepository jourFermetureRepository;
     @Mock private SoldeService soldeService;
     @Mock private MatchMapper matchMapper;
+    @Mock private UtilisateurRepository utilisateurRepository;
+    @Mock private InscriptionMatchMapper inscriptionMatchMapper;
 
     private MatchService matchService;
 
@@ -55,7 +58,8 @@ class MatchServiceTest {
         matchService = new MatchService(
                 matchRepository, inscriptionMatchRepository, transactionRepository,
                 terrainRepository, horaireSiteRepository, jourFermetureRepository,
-                soldeService, matchMapper, clockFige
+                soldeService, matchMapper, clockFige,
+                utilisateurRepository, inscriptionMatchMapper
         );
 
         siteAnderlecht = Site.builder()

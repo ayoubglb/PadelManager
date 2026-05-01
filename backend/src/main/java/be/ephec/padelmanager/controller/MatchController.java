@@ -1,5 +1,7 @@
 package be.ephec.padelmanager.controller;
 
+import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
+import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 @RestController
@@ -29,4 +32,18 @@ public class MatchController {
         MatchDTO match = matchService.creerMatch(requete, principal.getUtilisateur());
         return ResponseEntity.status(HttpStatus.CREATED).body(match);
     }
+
+    // Invite un joueur (par matricule) à un match privé
+    @PostMapping("/{id}/joueurs")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<InscriptionMatchDTO> inviterJoueur(
+            @PathVariable Long id,
+            @Valid @RequestBody InviterJoueurRequest requete,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        InscriptionMatchDTO inscription = matchService.inviterJoueur(
+                id, requete.matricule(), principal.getUtilisateur());
+        return ResponseEntity.status(HttpStatus.CREATED).body(inscription);
+    }
+
 }

@@ -82,8 +82,8 @@ class PlanningServiceTest {
         when(terrainRepository.findBySiteIdAndActiveTrueOrderByNumeroAsc(1L))
                 .thenReturn(List.of(t1, t2));
         when(generateurCreneau.genererCreneaux(1L, 2026)).thenReturn(List.of(
-                new Creneau(LocalTime.of(8, 0),  LocalTime.of(9, 30)),
-                new Creneau(LocalTime.of(9, 45), LocalTime.of(11, 15))
+                new CreneauDTO(LocalTime.of(8, 0),  LocalTime.of(9, 30)),
+                new CreneauDTO(LocalTime.of(9, 45), LocalTime.of(11, 15))
         ));
     }
 
