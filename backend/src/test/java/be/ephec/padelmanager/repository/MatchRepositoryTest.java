@@ -1,11 +1,6 @@
 package be.ephec.padelmanager.repository;
 
-import be.ephec.padelmanager.entity.Match;
-import be.ephec.padelmanager.entity.RoleUtilisateur;
-import be.ephec.padelmanager.entity.StatutMatch;
-import be.ephec.padelmanager.entity.Terrain;
-import be.ephec.padelmanager.entity.TypeMatch;
-import be.ephec.padelmanager.entity.Utilisateur;
+import be.ephec.padelmanager.entity.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -292,6 +287,79 @@ class MatchRepositoryTest {
 
         assertThat(nos3).extracting(Match::getId)
                 .containsExactly(plusTot.getId(), moyen.getId(), plusTard.getId());
+    }
+
+    // ─── findMesMatchs ──────────────────────────
+
+    @Test
+    @DisplayName("findMesMatchs aVenir=true retourne les matchs futurs où le joueur est inscrit")
+    void findMesMatchsAVenir() {
+        Match futur = creer(LocalDateTime.now().plusDays(20),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+
+        em.persistAndFlush(InscriptionMatch.builder()
+                .match(futur).joueur(organisateur)
+                .paye(true).statut(StatutInscription.INSCRIT).estOrganisateur(true)
+                .build());
+
+        List<Match> resultats = matchRepository.findMesMatchs(
+                organisateur.getId(), true, LocalDateTime.now());
+
+        assertThat(resultats).extracting(Match::getId).contains(futur.getId());
+    }
+
+    @Test
+    @DisplayName("findMesMatchs aVenir=false retourne les matchs passés où le joueur est inscrit")
+    void findMesMatchsPasses() {
+        Match passe = creer(LocalDateTime.now().minusDays(20),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+
+        em.persistAndFlush(InscriptionMatch.builder()
+                .match(passe).joueur(organisateur)
+                .paye(true).statut(StatutInscription.INSCRIT).estOrganisateur(true)
+                .build());
+
+        List<Match> resultats = matchRepository.findMesMatchs(
+                organisateur.getId(), false, LocalDateTime.now());
+
+        assertThat(resultats).extracting(Match::getId).contains(passe.getId());
+    }
+
+    @Test
+    @DisplayName("findMesMatchs ne retourne pas les matchs où le joueur n'est pas inscrit")
+    void findMesMatchsExclutMatchsSansInscription() {
+        // Crée un autre utilisateur qui sera l'organisateur du match
+        Utilisateur autreUser = em.persistAndFlush(Utilisateur.builder()
+                .matricule("L999201")
+                .email("autre.match@padelmanager.be")
+                .telephone("0000000001")
+                .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
+                .nom("Autre").prenom("User")
+                .role(RoleUtilisateur.MEMBRE_LIBRE)
+                .active(true)
+                .build());
+
+        // Crée un match dont autreUser est l'organisateur (pas notre utilisateur de test)
+        Match autreMatch = em.persistAndFlush(Match.builder()
+                .terrain(terrain)
+                .dateHeureDebut(LocalDateTime.now().plusDays(25))
+                .dateHeureFin(LocalDateTime.now().plusDays(25).plusMinutes(90))
+                .organisateur(autreUser)
+                .type(TypeMatch.PRIVE)
+                .statut(StatutMatch.PROGRAMME)
+                .build());
+
+        // Inscription de autreUser sur ce match (pas notre organisateur)
+        em.persistAndFlush(InscriptionMatch.builder()
+                .match(autreMatch).joueur(autreUser)
+                .paye(true).statut(StatutInscription.INSCRIT).estOrganisateur(true)
+                .build());
+
+        // organisateur n'est pas inscrit à ce match
+        List<Match> resultats = matchRepository.findMesMatchs(
+                organisateur.getId(), true, LocalDateTime.now());
+
+        assertThat(resultats).extracting(Match::getId).doesNotContain(autreMatch.getId());
     }
 
 }

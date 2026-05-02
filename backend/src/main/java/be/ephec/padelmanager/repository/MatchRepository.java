@@ -72,4 +72,18 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("debut") LocalDateTime debut,
             @Param("fin") LocalDateTime fin
     );
+
+    // Récupère tous les matchs où le joueur a une inscription, avec filtre temporel optionnel
+    @Query("""
+        SELECT DISTINCT m FROM Match m
+        JOIN InscriptionMatch i ON i.match = m
+        WHERE i.joueur.id = :joueurId
+          AND (:aVenir = false OR m.dateHeureDebut > :maintenant)
+          AND (:aVenir = true OR m.dateHeureDebut <= :maintenant)
+        """)
+    List<Match> findMesMatchs(@Param("joueurId") Long joueurId,
+                              @Param("aVenir") boolean aVenir,
+                              @Param("maintenant") LocalDateTime maintenant);
+
+
 }
