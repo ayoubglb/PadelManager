@@ -16,6 +16,7 @@ import be.ephec.padelmanager.mapper.TransactionMapper;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
 import be.ephec.padelmanager.repository.TransactionRepository;
+import be.ephec.padelmanager.repository.PenaliteRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +51,7 @@ class MatchServiceAnnulerTest {
     @Mock private InscriptionMatchRepository inscriptionMatchRepository;
     @Mock private TransactionRepository transactionRepository;
     @Mock private TransactionMapper transactionMapper;
+    @Mock private PenaliteRepository penaliteRepository;
 
     // Mocks requis par le constructeur de MatchService mais non utilisés ici
     @Mock private be.ephec.padelmanager.repository.TerrainRepository terrainRepository;
@@ -76,7 +78,8 @@ class MatchServiceAnnulerTest {
                 matchRepository, inscriptionMatchRepository, transactionRepository,
                 terrainRepository, horaireSiteRepository, jourFermetureRepository,
                 soldeService, matchMapper, clockFige,
-                utilisateurRepository, inscriptionMatchMapper, transactionMapper);
+                utilisateurRepository, inscriptionMatchMapper, transactionMapper,
+                penaliteRepository);
 
         organisateur = Utilisateur.builder()
                 .id(100L).matricule("L600001").nom("Doe").prenom("John")

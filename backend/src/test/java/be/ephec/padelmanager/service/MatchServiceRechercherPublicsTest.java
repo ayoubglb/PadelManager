@@ -10,6 +10,7 @@ import be.ephec.padelmanager.entity.TypeMatch;
 import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
+import be.ephec.padelmanager.repository.PenaliteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ class MatchServiceRechercherPublicsTest {
 
     @Mock private MatchRepository matchRepository;
     @Mock private InscriptionMatchRepository inscriptionMatchRepository;
+    @Mock private PenaliteRepository penaliteRepository;
 
     // Mocks requis par le constructeur de MatchService mais non utilisés ici
     @Mock private be.ephec.padelmanager.repository.TransactionRepository transactionRepository;
@@ -64,7 +66,8 @@ class MatchServiceRechercherPublicsTest {
                 matchRepository, inscriptionMatchRepository, transactionRepository,
                 terrainRepository, horaireSiteRepository, jourFermetureRepository,
                 soldeService, matchMapper, clockFige,
-                utilisateurRepository, inscriptionMatchMapper, transactionMapper);
+                utilisateurRepository, inscriptionMatchMapper, transactionMapper,
+                penaliteRepository);
 
         site = Site.builder().id(1L).nom("Anderlecht").active(true).build();
         terrain = Terrain.builder().id(10L).numero(1).nom("T1").site(site).active(true).build();

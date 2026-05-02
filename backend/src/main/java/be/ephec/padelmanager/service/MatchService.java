@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -45,6 +46,7 @@ public class MatchService {
     private final UtilisateurRepository utilisateurRepository;
     private final InscriptionMatchMapper inscriptionMatchMapper;
     private final TransactionMapper transactionMapper;
+    private final PenaliteRepository penaliteRepository;
 
     @Transactional
     public MatchDTO creerMatch(CreateMatchRequest requete, Utilisateur organisateur) {
@@ -53,6 +55,7 @@ public class MatchService {
 
         // Validations statiques
         validerOrganisateurActif(organisateur);
+        validerPasDePenaliteActive(organisateur, maintenant);
         validerDateFuture(dateMatch, maintenant);
         validerDelaiReservation(organisateur, dateMatch, maintenant);
 
@@ -200,6 +203,17 @@ public class MatchService {
                             + " est en dehors des horaires d'ouverture du site ("
                             + horaire.getHeureDebut() + " - " + horaire.getHeureFin() + ")");
         }
+    }
+
+    // Refuse si l'utilisateur a une pénalité active
+    private void validerPasDePenaliteActive(Utilisateur utilisateur, LocalDateTime maintenant) {
+        penaliteRepository.findActiveByUtilisateurId(utilisateur.getId(), maintenant)
+                .ifPresent(p -> {
+                    String dateFin = p.getDateFin().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    throw new IllegalArgumentException(
+                            "Réservation refusée : pénalité active jusqu'au " + dateFin
+                                    + " (motif : " + p.getMotif() + ")");
+                });
     }
 
 
