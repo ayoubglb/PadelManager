@@ -3,6 +3,7 @@ package be.ephec.padelmanager.controller;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
 import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
+import be.ephec.padelmanager.dto.match.AnnulationMatchResponse;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.dto.match.MatchPublicDTO;
@@ -86,6 +87,18 @@ public class MatchController {
             @AuthenticationPrincipal UtilisateurPrincipal principal
     ) {
         RejoindreMatchResponse reponse = matchService.rejoindreMatchPublic(
+                id, principal.getUtilisateur());
+        return ResponseEntity.ok(reponse);
+    }
+
+    // Annule un match privé ou public
+    @PostMapping("/{id}/annuler")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<AnnulationMatchResponse> annulerMatch(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        AnnulationMatchResponse reponse = matchService.annulerMatch(
                 id, principal.getUtilisateur());
         return ResponseEntity.ok(reponse);
     }
