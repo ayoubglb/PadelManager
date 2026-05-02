@@ -21,6 +21,10 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.util.Optional;
 
+import be.ephec.padelmanager.entity.Penalite;
+import java.util.Optional;
+import static org.mockito.ArgumentMatchers.eq;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +45,7 @@ class MatchServiceTest {
     @Mock private UtilisateurRepository utilisateurRepository;
     @Mock private InscriptionMatchMapper inscriptionMatchMapper;
     @Mock private TransactionMapper transactionMapper;
+    @Mock private PenaliteRepository penaliteRepository;
 
     private MatchService matchService;
 
@@ -61,7 +66,8 @@ class MatchServiceTest {
                 matchRepository, inscriptionMatchRepository, transactionRepository,
                 terrainRepository, horaireSiteRepository, jourFermetureRepository,
                 soldeService, matchMapper, clockFige,
-                utilisateurRepository, inscriptionMatchMapper, transactionMapper
+                utilisateurRepository, inscriptionMatchMapper, transactionMapper,
+                penaliteRepository
         );
 
         siteAnderlecht = Site.builder()
@@ -327,5 +333,28 @@ class MatchServiceTest {
         verify(matchRepository, never()).save(any());
         verify(inscriptionMatchRepository, never()).save(any());
         verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("creerMatch refuse si l'organisateur a une pénalité active")
+    void creerMatchAvecPenaliteActiveRefuse() {
+        Penalite penaliteActive = Penalite.builder()
+                .id(1L).utilisateur(membreLibre)
+                .dateDebut(LocalDateTime.now(clockFige).minusDays(2))
+                .dateFin(LocalDateTime.now(clockFige).plusDays(5))
+                .motif("CONVERSION_AUTO_PRIVE_PUBLIC")
+                .build();
+
+        when(penaliteRepository.findActiveByUtilisateurId(eq(membreLibre.getId()), any()))
+                .thenReturn(Optional.of(penaliteActive));
+
+        CreateMatchRequest requete = new CreateMatchRequest(
+                10L, LocalDateTime.now(clockFige).plusDays(3), TypeMatch.PRIVE);
+
+        assertThatThrownBy(() -> matchService.creerMatch(requete, membreLibre))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pénalité active");
+
+        verify(matchRepository, never()).save(any());
     }
 }
