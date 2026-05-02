@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -220,4 +221,49 @@ class TransactionRepositoryTest {
 
         assertThat(total).isEqualByComparingTo("25.00");
     }
+
+    // ----------------------------------------------
+    // ─── findMesTransactions ──────────────────────────
+
+    @Test
+    @DisplayName("findMesTransactions sans filtre → toutes les transactions du user")
+    void findMesTransactionsSansFiltre() {
+        creer(TypeTransaction.RECHARGE, "50.00", null);
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);
+
+        List<Transaction> resultats = transactionRepository.findMesTransactions(
+                utilisateur.getId(), null, null, null);
+
+        assertThat(resultats).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(resultats).allMatch(t -> t.getUtilisateur().getId().equals(utilisateur.getId()));
+    }
+
+    @Test
+    @DisplayName("findMesTransactions avec type RECHARGE → ne retourne que les RECHARGE")
+    void findMesTransactionsFiltreType() {
+        creer(TypeTransaction.RECHARGE, "50.00", null);
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);
+
+        List<Transaction> resultats = transactionRepository.findMesTransactions(
+                utilisateur.getId(), TypeTransaction.RECHARGE, null, null);
+
+        assertThat(resultats).isNotEmpty();
+        assertThat(resultats).allMatch(t -> t.getType() == TypeTransaction.RECHARGE);
+    }
+
+    @Test
+    @DisplayName("findMesTransactions avec dateDebut dans le futur → liste vide")
+    void findMesTransactionsFiltreDateDebutFutur() {
+        creer(TypeTransaction.RECHARGE, "50.00", null);
+
+        List<Transaction> resultats = transactionRepository.findMesTransactions(
+                utilisateur.getId(), null,
+                LocalDateTime.now().plusDays(1),
+                null);
+
+        assertThat(resultats).isEmpty();
+    }
+
+
+
 }

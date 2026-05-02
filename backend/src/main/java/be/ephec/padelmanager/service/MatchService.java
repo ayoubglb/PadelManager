@@ -3,10 +3,7 @@ package be.ephec.padelmanager.service;
 import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
-import be.ephec.padelmanager.dto.match.AnnulationMatchResponse;
-import be.ephec.padelmanager.dto.match.CreateMatchRequest;
-import be.ephec.padelmanager.dto.match.MatchDTO;
-import be.ephec.padelmanager.dto.match.MatchPublicDTO;
+import be.ephec.padelmanager.dto.match.*;
 import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.entity.*;
 import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
@@ -25,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -549,5 +547,54 @@ public class MatchService {
                     "Trop tard pour annuler ce match " + typeMatch
                             + " (délai minimum : " + heuresMin + "h avant)");
         }
+    }
+
+    // -----------------------
+    // Liste les matchs du joueur authentifié
+    @Transactional(readOnly = true)
+    public List<MesMatchsDTO> consulterMesMatchs(Utilisateur joueur, boolean aVenir) {
+        LocalDateTime maintenant = LocalDateTime.now(clock);
+        List<Match> matchs = matchRepository.findMesMatchs(joueur.getId(), aVenir, maintenant);
+
+        if (matchs.isEmpty()) {
+            return List.of();
+        }
+
+        // Tri : ASC pour à venir (proche d'abord), DESC pour passés (récent d'abord)
+        Comparator<Match> tri = Comparator.comparing(Match::getDateHeureDebut);
+        if (!aVenir) {
+            tri = tri.reversed();
+        }
+
+        // Récupère les inscriptions du joueur pour déterminer son rôle et son paiement
+        List<Long> matchIds = matchs.stream().map(Match::getId).toList();
+        Map<Long, InscriptionMatch> inscriptionsParMatch = inscriptionMatchRepository
+                .findByMatchIdInAndJoueurId(matchIds, joueur.getId()).stream()
+                .collect(Collectors.toMap(i -> i.getMatch().getId(), i -> i));
+
+        return matchs.stream()
+                .sorted(tri)
+                .map(m -> {
+                    InscriptionMatch inscription = inscriptionsParMatch.get(m.getId());
+                    MesMatchsDTO.MonRole role = Boolean.TRUE.equals(inscription.getEstOrganisateur())
+                            ? MesMatchsDTO.MonRole.ORGANISATEUR
+                            : MesMatchsDTO.MonRole.INVITE;
+                    int nombreInscrits = inscriptionMatchRepository
+                            .findInscritsByMatchId(m.getId()).size();
+                    return new MesMatchsDTO(
+                            m.getId(),
+                            m.getTerrain().getSite().getNom(),
+                            m.getTerrain().getNumero(),
+                            m.getDateHeureDebut(),
+                            m.getDateHeureFin(),
+                            m.getType(),
+                            m.getStatut(),
+                            m.getOrganisateur().getPrenom() + " " + m.getOrganisateur().getNom(),
+                            role,
+                            inscription.getPaye(),
+                            nombreInscrits
+                    );
+                })
+                .toList();
     }
 }

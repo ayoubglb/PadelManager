@@ -3,10 +3,7 @@ package be.ephec.padelmanager.controller;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
 import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
-import be.ephec.padelmanager.dto.match.AnnulationMatchResponse;
-import be.ephec.padelmanager.dto.match.CreateMatchRequest;
-import be.ephec.padelmanager.dto.match.MatchDTO;
-import be.ephec.padelmanager.dto.match.MatchPublicDTO;
+import be.ephec.padelmanager.dto.match.*;
 import be.ephec.padelmanager.dto.transaction.TransactionDTO;
 import be.ephec.padelmanager.security.UtilisateurPrincipal;
 import be.ephec.padelmanager.service.MatchService;
@@ -101,6 +98,18 @@ public class MatchController {
         AnnulationMatchResponse reponse = matchService.annulerMatch(
                 id, principal.getUtilisateur());
         return ResponseEntity.ok(reponse);
+    }
+
+    // Liste les matchs de l'utilisateur authentifié
+    @GetMapping("/mes-matchs")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<List<MesMatchsDTO>> consulterMesMatchs(
+            @RequestParam(defaultValue = "true") boolean aVenir,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        List<MesMatchsDTO> matchs = matchService.consulterMesMatchs(
+                principal.getUtilisateur(), aVenir);
+        return ResponseEntity.ok(matchs);
     }
 
 }

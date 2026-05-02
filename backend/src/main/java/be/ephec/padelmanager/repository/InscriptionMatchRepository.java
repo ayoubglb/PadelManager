@@ -57,4 +57,12 @@ public interface InscriptionMatchRepository extends JpaRepository<InscriptionMat
         GROUP BY i.match.id
         """)
     List<Object[]> countJoueursPayesByMatchIdIn(@Param("matchIds") List<Long> matchIds);
+
+    // Récupère les inscriptions d'un joueur dans une liste de matchs
+    @Query("""
+        SELECT i FROM InscriptionMatch i
+        WHERE i.match.id IN :matchIds AND i.joueur.id = :joueurId
+        """)
+    List<InscriptionMatch> findByMatchIdInAndJoueurId(@Param("matchIds") List<Long> matchIds,
+                                                      @Param("joueurId") Long joueurId);
 }

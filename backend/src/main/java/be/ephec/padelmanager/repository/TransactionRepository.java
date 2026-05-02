@@ -54,4 +54,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         """)
     BigDecimal calculerTotalRemboursements(@Param("debut") LocalDateTime debut,
                                            @Param("fin") LocalDateTime fin);
+
+    // Récupère les transactions d'un utilisateur avec filtres optionnels
+    @Query("""
+        SELECT t FROM Transaction t
+        WHERE t.utilisateur.id = :utilisateurId
+          AND (:type IS NULL OR t.type = :type)
+          AND (:dateDebut IS NULL OR t.date >= :dateDebut)
+          AND (:dateFin IS NULL OR t.date <= :dateFin)
+        ORDER BY t.date DESC
+        """)
+    List<Transaction> findMesTransactions(@Param("utilisateurId") Long utilisateurId,
+                                          @Param("type") TypeTransaction type,
+                                          @Param("dateDebut") LocalDateTime dateDebut,
+                                          @Param("dateFin") LocalDateTime dateFin);
 }

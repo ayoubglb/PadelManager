@@ -12,6 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,4 +48,21 @@ public class TransactionService {
             throw new IllegalArgumentException("Compte utilisateur désactivé");
         }
     }
+
+    // Liste les transactions de l'utilisateur authentifié avec filtres
+    @Transactional(readOnly = true)
+    public List<TransactionDTO> consulterMesTransactions(Utilisateur utilisateur,
+                                                         TypeTransaction type,
+                                                         LocalDate dateDebut,
+                                                         LocalDate dateFin) {
+        LocalDateTime debut = dateDebut != null ? dateDebut.atStartOfDay() : null;
+        LocalDateTime fin = dateFin != null ? dateFin.atTime(LocalTime.MAX) : null;
+
+        return transactionRepository
+                .findMesTransactions(utilisateur.getId(), type, debut, fin).stream()
+                .map(transactionMapper::toDto)
+                .toList();
+    }
+
+
 }
