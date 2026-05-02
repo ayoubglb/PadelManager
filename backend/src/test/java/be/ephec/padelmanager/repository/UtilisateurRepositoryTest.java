@@ -1,6 +1,7 @@
 package be.ephec.padelmanager.repository;
 
 import be.ephec.padelmanager.entity.RoleUtilisateur;
+import be.ephec.padelmanager.entity.Site;
 import be.ephec.padelmanager.entity.Utilisateur;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,4 +89,67 @@ class UtilisateurRepositoryTest {
 
         assertThat(trouve).isEmpty();
     }
+
+    // ─── findByIdWithSite (JOIN FETCH pour endpoint /me) ─────────────────
+
+    @Test
+    @DisplayName("findByIdWithSite charge le siteRattachement en eager (évite LazyInitializationException)")
+    void findByIdWithSiteChargeLeSite() {
+        Site site = em.persist(Site.builder()
+                .nom("SiteTestFindByIdWithSite")  // ← nom unique pour ne pas conflicter avec le seed
+                .adresse("Rue du Test 1")
+                .codePostal("1070")
+                .ville("Anderlecht")
+                .active(true)
+                .build());
+
+        Utilisateur u = em.persist(Utilisateur.builder()
+                .matricule("S200099").nom("Test").prenom("User")
+                .email("test.findbyidwithsite@padelmanager.be")
+                .telephone("0000000000")
+                .passwordHash("hash")
+                .role(RoleUtilisateur.MEMBRE_SITE)
+                .siteRattachement(site)
+                .active(true)
+                .build());
+
+        em.flush();
+        em.clear();
+
+        Utilisateur trouve = utilisateurRepository.findByIdWithSite(u.getId()).orElseThrow();
+
+        assertThat(trouve.getSiteRattachement()).isNotNull();
+        assertThat(trouve.getSiteRattachement().getNom()).isEqualTo("SiteTestFindByIdWithSite");
+    }
+
+    @Test
+    @DisplayName("findByIdWithSite renvoie Optional.empty pour un id inconnu")
+    void findByIdWithSiteIdInconnu() {
+        Optional<Utilisateur> resultat = utilisateurRepository.findByIdWithSite(999999L);
+        assertThat(resultat).isEmpty();
+    }
+
+    @Test
+    @DisplayName("findByIdWithSite fonctionne aussi pour un utilisateur sans site rattachement (LEFT JOIN)")
+    void findByIdWithSiteSansSite() {
+        Utilisateur u = em.persist(Utilisateur.builder()
+                .matricule("L600099").nom("Test").prenom("Libre")
+                .email("test.libre@padelmanager.be")
+                .telephone("0000000000")
+                .passwordHash("hash")
+                .role(RoleUtilisateur.MEMBRE_LIBRE)
+                .siteRattachement(null)  // Membre libre = pas de site
+                .active(true)
+                .build());
+
+        em.flush();
+        em.clear();
+
+        Utilisateur trouve = utilisateurRepository.findByIdWithSite(u.getId()).orElseThrow();
+
+        assertThat(trouve.getSiteRattachement()).isNull();
+        assertThat(trouve.getMatricule()).isEqualTo("L600099");
+    }
+
+
 }

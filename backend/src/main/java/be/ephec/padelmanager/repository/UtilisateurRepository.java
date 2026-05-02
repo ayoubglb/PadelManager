@@ -22,4 +22,8 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     boolean existsByEmail(String email);
 
     boolean existsByMatricule(String matricule);
+
+    // Récupère un utilisateur avec son site rattaché chargé en eager (évite LazyInitializationException)
+    @Query("SELECT u FROM Utilisateur u LEFT JOIN FETCH u.siteRattachement WHERE u.id = :id")
+    Optional<Utilisateur> findByIdWithSite(@Param("id") Long id);
 }
