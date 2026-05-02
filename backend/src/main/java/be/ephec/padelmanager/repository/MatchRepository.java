@@ -32,6 +32,20 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
         """)
     List<Match> findPublicsAVenir(@Param("now") LocalDateTime now);
 
+    // Recherche les matchs publics PROGRAMME futurs avec filtres optionnels
+    @Query("""
+        SELECT m FROM Match m
+        WHERE m.type = be.ephec.padelmanager.entity.TypeMatch.PUBLIC
+          AND m.statut = be.ephec.padelmanager.entity.StatutMatch.PROGRAMME
+          AND m.dateHeureDebut >= :dateDebut
+          AND (:dateFin IS NULL OR m.dateHeureDebut <= :dateFin)
+          AND (:siteId IS NULL OR m.terrain.site.id = :siteId)
+        ORDER BY m.dateHeureDebut ASC
+        """)
+    List<Match> rechercherPublics(@Param("dateDebut") LocalDateTime dateDebut,
+                                  @Param("dateFin") LocalDateTime dateFin,
+                                  @Param("siteId") Long siteId);
+
     @Query("""
         SELECT m FROM Match m
         WHERE m.type = be.ephec.padelmanager.entity.TypeMatch.PRIVE
