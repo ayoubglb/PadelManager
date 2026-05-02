@@ -3,6 +3,7 @@ package be.ephec.padelmanager.service;
 import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
+import be.ephec.padelmanager.dto.match.AnnulationMatchResponse;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.dto.match.MatchPublicDTO;
@@ -23,6 +24,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -472,4 +474,80 @@ public class MatchService {
         }
     }
 
+
+    // Annulation Match ----------------------------------------------------------------------
+    // Annule un match en remboursant les joueurs payants
+    // Délais : 48h avant pour PRIVE, 24h avant pour PUBLIC
+    @Transactional
+    public AnnulationMatchResponse annulerMatch(Long matchId, Utilisateur utilisateur) {
+        // Verrou pessimiste : empêche les paiements/désistements concurrents
+        Match match = matchRepository.findByIdForUpdate(matchId)
+                .orElseThrow(() -> new EntityNotFoundException("Match introuvable : " + matchId));
+
+        validerMatchProgrammePourAnnulation(match);
+        validerOrganisateurPourAnnulation(match, utilisateur);
+        validerDelaiAnnulation(match);
+
+        // Récupère toutes les inscriptions payées (joueurs à rembourser)
+        List<InscriptionMatch> inscriptionsPayees = inscriptionMatchRepository
+                .findByMatchId(match.getId()).stream()
+                .filter(i -> Boolean.TRUE.equals(i.getPaye()))
+                .toList();
+
+        // Crée une transaction REMBOURSEMENT pour chaque joueur payant
+        List<TransactionDTO> remboursements = new ArrayList<>();
+        for (InscriptionMatch inscription : inscriptionsPayees) {
+            Transaction remboursement = Transaction.builder()
+                    .utilisateur(inscription.getJoueur())
+                    .type(TypeTransaction.REMBOURSEMENT)
+                    .montant(PricingConstants.PART_JOUEUR)
+                    .match(match)
+                    .build();
+            remboursement = transactionRepository.save(remboursement);
+            remboursements.add(transactionMapper.toDto(remboursement));
+        }
+
+        // Marque le match comme ANNULE
+        match.setStatut(StatutMatch.ANNULE);
+        matchRepository.save(match);
+
+        log.info("Match annulé : id={}, organisateur={}, remboursements={} ({}€ chacun)",
+                match.getId(), utilisateur.getMatricule(),
+                remboursements.size(), PricingConstants.PART_JOUEUR);
+
+        return new AnnulationMatchResponse(
+                match.getId(),
+                remboursements.size(),
+                remboursements);
+    }
+
+    // Refuse si le match n'est pas en statut PROGRAMME
+    private void validerMatchProgrammePourAnnulation(Match match) {
+        if (match.getStatut() != StatutMatch.PROGRAMME) {
+            throw new IllegalArgumentException(
+                    "Seul un match programmé peut être annulé");
+        }
+    }
+
+    // Refuse si l'utilisateur authentifié n'est pas l'organisateur
+    private void validerOrganisateurPourAnnulation(Match match, Utilisateur utilisateur) {
+        if (!match.getOrganisateur().getId().equals(utilisateur.getId())) {
+            throw new AccessDeniedException(
+                    "Seul l'organisateur peut annuler son match");
+        }
+    }
+
+    // Refuse si on est trop proche de la date du match (48h privé, 24h public)
+    private void validerDelaiAnnulation(Match match) {
+        LocalDateTime maintenant = LocalDateTime.now(clock);
+        int heuresMin = (match.getType() == TypeMatch.PRIVE) ? 48 : 24;
+        LocalDateTime limite = match.getDateHeureDebut().minusHours(heuresMin);
+
+        if (maintenant.isAfter(limite)) {
+            String typeMatch = (match.getType() == TypeMatch.PRIVE) ? "privé" : "public";
+            throw new IllegalArgumentException(
+                    "Trop tard pour annuler ce match " + typeMatch
+                            + " (délai minimum : " + heuresMin + "h avant)");
+        }
+    }
 }
