@@ -2,6 +2,7 @@ package be.ephec.padelmanager.service;
 
 import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
+import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.dto.match.MatchPublicDTO;
@@ -256,12 +257,12 @@ public class MatchService {
         }
     }
 
-    // Refuse si le match a déjà 4 joueurs inscrits (max 4 joueurs)
+    // Refuse si le match a déjà 4 joueurs (factorisée pour invitation et rejoindre)
     private void validerPlacesRestantes(Match match) {
         long inscrits = inscriptionMatchRepository.findInscritsByMatchId(match.getId()).size();
-        if (inscrits >= 4) {
+        if (inscrits >= PricingConstants.NB_JOUEURS_MAX) {
             throw new IllegalArgumentException(
-                    "Le match est complet (4 joueurs maximum)");
+                    "Le match est complet (4 joueurs)");
         }
     }
 
@@ -393,5 +394,82 @@ public class MatchService {
                 .toList();
     }
 
+    // ------------------------------------------------------------------
+    // Rejoint un match public en payant sa part 15€
+    // Utilise un verrou pessimiste sur le match pour gérer la concurrence
+    // (premier payé, premier servi).
+    @Transactional
+    public RejoindreMatchResponse rejoindreMatchPublic(Long matchId, Utilisateur joueur) {
+        // Verrou pessimiste : bloque toute autre transaction sur ce match
+        Match match = matchRepository.findByIdForUpdate(matchId)
+                .orElseThrow(() -> new EntityNotFoundException("Match introuvable : " + matchId));
+
+        validerMatchPublicProgramme(match);
+        validerNonOrganisateur(match, joueur);
+        validerNonDejaInscrit(match, joueur);
+        validerPlacesRestantes(match);
+        validerSoldeSuffisantPourRejoindre(joueur);
+
+        // Création atomique : InscriptionMatch + Transaction PAIEMENT_MATCH
+        InscriptionMatch inscription = InscriptionMatch.builder()
+                .match(match)
+                .joueur(joueur)
+                .paye(true)
+                .statut(StatutInscription.INSCRIT)
+                .estOrganisateur(false)
+                .build();
+        inscription = inscriptionMatchRepository.save(inscription);
+
+        Transaction transaction = Transaction.builder()
+                .utilisateur(joueur)
+                .type(TypeTransaction.PAIEMENT_MATCH)
+                .montant(PricingConstants.PART_JOUEUR)
+                .match(match)
+                .build();
+        transaction = transactionRepository.save(transaction);
+
+        log.info("Match public rejoint : match={}, joueur={}, montant={}€",
+                match.getId(), joueur.getMatricule(), PricingConstants.PART_JOUEUR);
+
+        return new RejoindreMatchResponse(
+                inscriptionMatchMapper.toDto(inscription),
+                transactionMapper.toDto(transaction));
+    }
+
+    // Refuse si le match n'est pas public ou pas programmé
+    private void validerMatchPublicProgramme(Match match) {
+        if (match.getType() != TypeMatch.PUBLIC) {
+            throw new IllegalArgumentException(
+                    "Cet endpoint est réservé aux matchs publics");
+        }
+        if (match.getStatut() != StatutMatch.PROGRAMME) {
+            throw new IllegalArgumentException(
+                    "Le match n'est pas ouvert aux inscriptions");
+        }
+    }
+
+    // Refuse si le user est l'organisateur (déjà inscrit nativement)
+    private void validerNonOrganisateur(Match match, Utilisateur joueur) {
+        if (match.getOrganisateur().getId().equals(joueur.getId())) {
+            throw new IllegalArgumentException(
+                    "Vous êtes l'organisateur de ce match, vous y êtes déjà inscrit");
+        }
+    }
+
+    // Refuse si le user a déjà une inscription pour ce match
+    private void validerNonDejaInscrit(Match match, Utilisateur joueur) {
+        if (inscriptionMatchRepository.existsByMatchIdAndJoueurId(match.getId(), joueur.getId())) {
+            throw new IllegalArgumentException(
+                    "Vous êtes déjà inscrit à ce match");
+        }
+    }
+
+    // Refuse si solde < 15€
+    private void validerSoldeSuffisantPourRejoindre(Utilisateur joueur) {
+        if (!soldeService.disposeAuMoinsDe(joueur.getId(), PricingConstants.PART_JOUEUR)) {
+            throw new IllegalArgumentException(
+                    "Solde insuffisant pour rejoindre. Veuillez recharger votre compte.");
+        }
+    }
 
 }

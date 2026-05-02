@@ -2,6 +2,7 @@ package be.ephec.padelmanager.controller;
 
 import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.InviterJoueurRequest;
+import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
 import be.ephec.padelmanager.dto.match.CreateMatchRequest;
 import be.ephec.padelmanager.dto.match.MatchDTO;
 import be.ephec.padelmanager.dto.match.MatchPublicDTO;
@@ -75,6 +76,18 @@ public class MatchController {
         List<MatchPublicDTO> resultats = matchService.rechercherMatchsPublics(
                 siteId, dateDebut, dateFin, placesMin);
         return ResponseEntity.ok(resultats);
+    }
+
+    // Rejoint un match public en payant sa part
+    @PostMapping("/{id}/rejoindre")
+    @PreAuthorize("hasAnyRole('MEMBRE_LIBRE', 'MEMBRE_SITE', 'MEMBRE_GLOBAL')")
+    public ResponseEntity<RejoindreMatchResponse> rejoindreMatchPublic(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        RejoindreMatchResponse reponse = matchService.rejoindreMatchPublic(
+                id, principal.getUtilisateur());
+        return ResponseEntity.ok(reponse);
     }
 
 }
