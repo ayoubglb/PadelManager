@@ -44,7 +44,6 @@ class TransactionRepositoryTest {
         registry.add("spring.datasource.url",      mssql::getJdbcUrl);
         registry.add("spring.datasource.username", mssql::getUsername);
         registry.add("spring.datasource.password", mssql::getPassword);
-        // Override Liquibase credentials pour qu'il utilise sa/password du container
         registry.add("spring.liquibase.url",      mssql::getJdbcUrl);
         registry.add("spring.liquibase.user",     mssql::getUsername);
         registry.add("spring.liquibase.password", mssql::getPassword);
@@ -58,7 +57,6 @@ class TransactionRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        // On insère un utilisateur dédié au test pour ne pas dépendre du seed
         utilisateur = em.persistAndFlush(Utilisateur.builder()
                 .matricule("L999001")
                 .email("test.solde@padelmanager.be")
@@ -69,7 +67,6 @@ class TransactionRepositoryTest {
                 .active(true)
                 .build());
 
-        // Match associé à un site/terrain seed (id=1 = premier site Anderlecht en seed)
         Site site = em.find(Site.class, 1L);
         Terrain terrain = em.getEntityManager()
                 .createQuery("SELECT t FROM Terrain t WHERE t.site.id = 1 AND t.numero = 1", Terrain.class)
@@ -95,13 +92,12 @@ class TransactionRepositoryTest {
                 .build());
     }
 
-    // ─── calculerSoldeUtilisateur  ────────────────────────────
+    // ─── calculerSoldeUtilisateur ───────────────────────────────
 
     @Test
     @DisplayName("calculerSoldeUtilisateur sans aucune transaction → 0")
     void soldeVidePourUtilisateurSansTransaction() {
         BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
-
         assertThat(solde).isEqualByComparingTo("0");
     }
 
@@ -112,7 +108,6 @@ class TransactionRepositoryTest {
         creer(TypeTransaction.REMBOURSEMENT, "15.00", match);
 
         BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
-
         assertThat(solde).isEqualByComparingTo("115.00");
     }
 
@@ -124,8 +119,6 @@ class TransactionRepositoryTest {
         creer(TypeTransaction.SOLDE_DU_ORGANISATEUR, "10.00", match);
 
         BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
-
-        // 100 - 15 - 10 = 75
         assertThat(solde).isEqualByComparingTo("75.00");
     }
 
@@ -150,19 +143,16 @@ class TransactionRepositoryTest {
                 .build());
 
         BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
-
         assertThat(solde).isEqualByComparingTo("50.00");
     }
 
-    // ─── existsSoldeDuOrganisateurForMatch ────
+    // ─── existsSoldeDuOrganisateurForMatch ────────────
 
     @Test
     @DisplayName("existsSoldeDuOrganisateurForMatch → false si aucun SOLDE_DU pour le match")
     void existsSoldeDuFauxSiAucun() {
         creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);
-
         boolean existe = transactionRepository.existsSoldeDuOrganisateurForMatch(match.getId());
-
         assertThat(existe).isFalse();
     }
 
@@ -170,13 +160,11 @@ class TransactionRepositoryTest {
     @DisplayName("existsSoldeDuOrganisateurForMatch → true si SOLDE_DU existe pour le match")
     void existsSoldeDuVraiSiPresent() {
         creer(TypeTransaction.SOLDE_DU_ORGANISATEUR, "10.00", match);
-
         boolean existe = transactionRepository.existsSoldeDuOrganisateurForMatch(match.getId());
-
         assertThat(existe).isTrue();
     }
 
-    // ─── calculerCaBrut  ───────────────────────────
+    // ─── calculerCaBrut ──────────────────────────────
 
     @Test
     @DisplayName("calculerCaBrut additionne PAIEMENT_MATCH et SOLDE_DU dans la période")
@@ -205,15 +193,15 @@ class TransactionRepositoryTest {
         assertThat(ca).isEqualByComparingTo("0");
     }
 
-    // ─── calculerTotalRemboursements  ──────────────
+    // ─── calculerTotalRemboursements ─────────────────
 
     @Test
     @DisplayName("calculerTotalRemboursements somme uniquement les REMBOURSEMENT")
     void totalRemboursementsIsoleLeType() {
-        creer(TypeTransaction.RECHARGE, "100.00", null);          // exclu
-        creer(TypeTransaction.REMBOURSEMENT, "15.00", match);     // inclus
-        creer(TypeTransaction.REMBOURSEMENT, "10.00", match);     // inclus
-        creer(TypeTransaction.PAIEMENT_MATCH, "20.00", match);    // exclu
+        creer(TypeTransaction.RECHARGE, "100.00", null);
+        creer(TypeTransaction.REMBOURSEMENT, "15.00", match);
+        creer(TypeTransaction.REMBOURSEMENT, "10.00", match);
+        creer(TypeTransaction.PAIEMENT_MATCH, "20.00", match);
 
         BigDecimal total = transactionRepository.calculerTotalRemboursements(
                 LocalDateTime.now().minusDays(1),
@@ -222,8 +210,7 @@ class TransactionRepositoryTest {
         assertThat(total).isEqualByComparingTo("25.00");
     }
 
-    // ----------------------------------------------
-    // ─── findMesTransactions ──────────────────────────
+    // ─── findMesTransactions ─────────────────────────
 
     @Test
     @DisplayName("findMesTransactions sans filtre → toutes les transactions du user")
@@ -267,19 +254,67 @@ class TransactionRepositoryTest {
     @Test
     @DisplayName("calculerSoldeUtilisateur ajoute REMBOURSEMENT_SOLDE_DU_ORGANISATEUR au crédit")
     void calculerSoldeAvecRemboursementSoldeDu() {
-        // Recharge 100€
         creer(TypeTransaction.RECHARGE, "100.00", null);
-        // Dette de 30€ (organisateur d'un match public incomplet)
         creer(TypeTransaction.SOLDE_DU_ORGANISATEUR, "30.00", match);
-        // Contre-passation de 15€ (un joueur a rejoint)
         creer(TypeTransaction.REMBOURSEMENT_SOLDE_DU_ORGANISATEUR, "15.00", match);
 
         BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
-
-        // 100 - 30 + 15 = 85€
         assertThat(solde).isEqualByComparingTo(new BigDecimal("85.00"));
     }
 
+    // ─── sommerParTypeEtPeriode  ──────────
 
+    @Test
+    @DisplayName("sommerParTypeEtPeriode somme uniquement les transactions du type voulu")
+    void sommerParTypeEtPeriodeNominal() {
+        // Mesure la baseline (transactions RECHARGE déjà présentes via les seeds)
+        BigDecimal baseline = transactionRepository.sommerParTypeEtPeriode(
+                TypeTransaction.RECHARGE,
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now().plusYears(1),
+                null);
 
+        creer(TypeTransaction.RECHARGE, "100.00", null);
+        creer(TypeTransaction.RECHARGE, "50.00", null);
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);  // ne doit PAS être compté
+
+        BigDecimal somme = transactionRepository.sommerParTypeEtPeriode(
+                TypeTransaction.RECHARGE,
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now().plusYears(1),
+                null);
+
+        // La somme doit avoir augmenté EXACTEMENT de 150€ (100 + 50)
+        // Le PAIEMENT_MATCH ne doit pas être compté
+        assertThat(somme).isEqualByComparingTo(baseline.add(new BigDecimal("150.00")));
+    }
+
+    @Test
+    @DisplayName("sommerParTypesEtPeriode avec siteId filtre par match.terrain.site (RECHARGE exclues)")
+    void sommerParTypesEtPeriodeAvecFiltreSite() {
+        // Baseline pour Anderlecht (site id=1)
+        BigDecimal baselineAnderlecht = transactionRepository.sommerParTypesEtPeriode(
+                List.of(TypeTransaction.PAIEMENT_MATCH, TypeTransaction.SOLDE_DU_ORGANISATEUR),
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now().plusYears(1),
+                1L);
+
+        creer(TypeTransaction.RECHARGE, "100.00", null);  // exclu (pas de match)
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);  // inclus (match Anderlecht)
+
+        BigDecimal sommeAnderlecht = transactionRepository.sommerParTypesEtPeriode(
+                List.of(TypeTransaction.PAIEMENT_MATCH, TypeTransaction.SOLDE_DU_ORGANISATEUR),
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now().plusYears(1),
+                1L);
+        assertThat(sommeAnderlecht).isEqualByComparingTo(baselineAnderlecht.add(new BigDecimal("15.00")));
+
+        // Site 999 inexistant → pas de transactions, somme = 0
+        BigDecimal sommeInexistant = transactionRepository.sommerParTypesEtPeriode(
+                List.of(TypeTransaction.PAIEMENT_MATCH, TypeTransaction.SOLDE_DU_ORGANISATEUR),
+                LocalDateTime.now().minusYears(1),
+                LocalDateTime.now().plusYears(1),
+                999L);
+        assertThat(sommeInexistant).isEqualByComparingTo("0");
+    }
 }

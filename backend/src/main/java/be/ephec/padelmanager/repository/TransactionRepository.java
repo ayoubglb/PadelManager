@@ -69,4 +69,35 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                           @Param("type") TypeTransaction type,
                                           @Param("dateDebut") LocalDateTime dateDebut,
                                           @Param("dateFin") LocalDateTime dateFin);
+
+    // Somme des transactions d'un type donné dans une période, filtrable par site (via match.terrain.site).
+    // Si siteId est null, somme sur tous les sites
+    @Query("""
+        SELECT COALESCE(SUM(t.montant), 0) FROM Transaction t
+        LEFT JOIN t.match m
+        LEFT JOIN m.terrain te
+        LEFT JOIN te.site s
+        WHERE t.type = :type
+          AND t.date BETWEEN :debut AND :fin
+          AND (:siteId IS NULL OR s.id = :siteId)
+        """)
+    BigDecimal sommerParTypeEtPeriode(@Param("type") TypeTransaction type,
+                                      @Param("debut") LocalDateTime debut,
+                                      @Param("fin") LocalDateTime fin,
+                                      @Param("siteId") Long siteId);
+
+    // Somme de plusieurs types de transactions (utilisé pour grouper PAIEMENT_MATCH + SOLDE_DU)
+    @Query("""
+        SELECT COALESCE(SUM(t.montant), 0) FROM Transaction t
+        LEFT JOIN t.match m
+        LEFT JOIN m.terrain te
+        LEFT JOIN te.site s
+        WHERE t.type IN :types
+          AND t.date BETWEEN :debut AND :fin
+          AND (:siteId IS NULL OR s.id = :siteId)
+        """)
+    BigDecimal sommerParTypesEtPeriode(@Param("types") List<TypeTransaction> types,
+                                       @Param("debut") LocalDateTime debut,
+                                       @Param("fin") LocalDateTime fin,
+                                       @Param("siteId") Long siteId);
 }
