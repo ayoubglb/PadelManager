@@ -393,4 +393,70 @@ class MatchRepositoryTest {
         assertThat(resultats).extracting(Match::getId).doesNotContain(annule.getId());
     }
 
+    // ─── compterMatchs / compterMatchsAnnules / topOrganisateurs  ──────────
+
+    @Test
+    @DisplayName("compterMatchs filtre correctement par siteId et type")
+    void compterMatchsAvecFiltres() {
+        creer(LocalDateTime.now().plusDays(15), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+        creer(LocalDateTime.now().plusDays(16), TypeMatch.PUBLIC, StatutMatch.PROGRAMME, false);
+
+        // Tous les matchs (sans filtre site ni type)
+        long total = matchRepository.compterMatchs(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(30),
+                null,
+                null);
+        assertThat(total).isGreaterThanOrEqualTo(2);
+
+        // Uniquement PRIVE
+        long prives = matchRepository.compterMatchs(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(30),
+                null,
+                TypeMatch.PRIVE);
+        assertThat(prives).isGreaterThanOrEqualTo(1);
+
+        // Uniquement Anderlecht (id=1)
+        long anderlecht = matchRepository.compterMatchs(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(30),
+                1L,
+                null);
+        assertThat(anderlecht).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("compterMatchsAnnules ne compte que les ANNULE")
+    void compterMatchsAnnulesNeCompteQueAnnules() {
+        creer(LocalDateTime.now().plusDays(17), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+        creer(LocalDateTime.now().plusDays(18), TypeMatch.PRIVE, StatutMatch.ANNULE, false);
+
+        long annules = matchRepository.compterMatchsAnnules(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(30),
+                null);
+
+        assertThat(annules).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("topOrganisateurs retourne les organisateurs triés par COUNT(matchs) DESC")
+    void topOrganisateursTriesParNombreMatchs() {
+        // organisateur (de @BeforeEach) crée 2 matchs
+        creer(LocalDateTime.now().plusDays(19), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+        creer(LocalDateTime.now().plusDays(20), TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+
+        List<Object[]> tops = matchRepository.topOrganisateurs(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(30),
+                null);
+
+        assertThat(tops).isNotEmpty();
+        // 1ère colonne = utilisateurId, 5ème colonne = COUNT(matchs)
+        Object[] premier = tops.get(0);
+        assertThat(premier).hasSize(5);
+        assertThat((Long) premier[4]).isGreaterThanOrEqualTo(1L);
+    }
+
 }

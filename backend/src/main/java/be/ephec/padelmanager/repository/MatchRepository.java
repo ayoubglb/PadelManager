@@ -95,5 +95,47 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findMatchsAEcheance24h(@Param("maintenant") LocalDateTime maintenant,
                                        @Param("limite24h") LocalDateTime limite24h);
 
+    // Compte les matchs créés dans une période, optionnellement filtrés par site et type
+    @Query("""
+        SELECT COUNT(m) FROM Match m
+        WHERE m.dateHeureDebut BETWEEN :debut AND :fin
+          AND (:siteId IS NULL OR m.terrain.site.id = :siteId)
+          AND (:type IS NULL OR m.type = :type)
+        """)
+    long compterMatchs(@Param("debut") LocalDateTime debut,
+                       @Param("fin") LocalDateTime fin,
+                       @Param("siteId") Long siteId,
+                       @Param("type") TypeMatch type);
+
+    //  Compte les matchs ANNULE dans une période, optionnellement filtré par site
+    @Query("""
+        SELECT COUNT(m) FROM Match m
+        WHERE m.dateHeureDebut BETWEEN :debut AND :fin
+          AND m.statut = be.ephec.padelmanager.entity.StatutMatch.ANNULE
+          AND (:siteId IS NULL OR m.terrain.site.id = :siteId)
+        """)
+    long compterMatchsAnnules(@Param("debut") LocalDateTime debut,
+                              @Param("fin") LocalDateTime fin,
+                              @Param("siteId") Long siteId);
+
+    // Top organisateurs par nombre de matchs créés dans la période.
+    //  Retourne Object[] avec : id, matricule, prenom, nom, count. Limit côté service
+    @Query("""
+        SELECT m.organisateur.id,
+               m.organisateur.matricule,
+               m.organisateur.prenom,
+               m.organisateur.nom,
+               COUNT(m)
+        FROM Match m
+        WHERE m.dateHeureDebut BETWEEN :debut AND :fin
+          AND (:siteId IS NULL OR m.terrain.site.id = :siteId)
+        GROUP BY m.organisateur.id, m.organisateur.matricule,
+                 m.organisateur.prenom, m.organisateur.nom
+        ORDER BY COUNT(m) DESC
+        """)
+    List<Object[]> topOrganisateurs(@Param("debut") LocalDateTime debut,
+                                    @Param("fin") LocalDateTime fin,
+                                    @Param("siteId") Long siteId);
+
 
 }

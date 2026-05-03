@@ -280,6 +280,49 @@ class TransactionRepositoryTest {
         assertThat(solde).isEqualByComparingTo(new BigDecimal("85.00"));
     }
 
+    // ─── sommerParTypeEtPeriode  ──────────
+
+    @Test
+    @DisplayName("sommerParTypeEtPeriode somme uniquement les transactions du type voulu dans la période")
+    void sommerParTypeEtPeriodeNominal() {
+        creer(TypeTransaction.RECHARGE, "100.00", null);
+        creer(TypeTransaction.RECHARGE, "50.00", null);
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);  // ne doit PAS être compté
+
+        BigDecimal somme = transactionRepository.sommerParTypeEtPeriode(
+                TypeTransaction.RECHARGE,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1),
+                null);
+
+        assertThat(somme).isEqualByComparingTo("150.00");
+    }
+
+    @Test
+    @DisplayName("sommerParTypesEtPeriode avec siteId filtre par match.terrain.site (RECHARGE exclues)")
+    void sommerParTypesEtPeriodeAvecFiltreSite() {
+        // RECHARGE n'a pas de match → exclue par le filtre siteId
+        creer(TypeTransaction.RECHARGE, "100.00", null);
+        // PAIEMENT_MATCH lié au match (terrain id=1, site Anderlecht id=1)
+        creer(TypeTransaction.PAIEMENT_MATCH, "15.00", match);
+
+        // Filtre site=1 → doit prendre le PAIEMENT_MATCH d'Anderlecht
+        BigDecimal sommeAnderlecht = transactionRepository.sommerParTypesEtPeriode(
+                List.of(TypeTransaction.PAIEMENT_MATCH, TypeTransaction.SOLDE_DU_ORGANISATEUR),
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1),
+                1L);
+        assertThat(sommeAnderlecht).isEqualByComparingTo("15.00");
+
+        // Filtre site=999 (inexistant) → 0
+        BigDecimal sommeInexistant = transactionRepository.sommerParTypesEtPeriode(
+                List.of(TypeTransaction.PAIEMENT_MATCH, TypeTransaction.SOLDE_DU_ORGANISATEUR),
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1),
+                999L);
+        assertThat(sommeInexistant).isEqualByComparingTo("0");
+    }
+
 
 
 }
