@@ -119,4 +119,49 @@ class PenaliteRepositoryTest {
 
         assertThat(resultat).isEmpty();
     }
+
+    @Test
+    @DisplayName("UK partial sur match_id empêche d'insérer 2 pénalités pour le même match")
+    void ukMatchEmpecheDoublons() {
+        // Setup : crée un match
+        be.ephec.padelmanager.entity.Terrain terrain = em.getEntityManager()
+                .createQuery("SELECT t FROM Terrain t WHERE t.site.id = 1 AND t.numero = 1",
+                        be.ephec.padelmanager.entity.Terrain.class)
+                .getSingleResult();
+        be.ephec.padelmanager.entity.Match match = em.persistAndFlush(
+                be.ephec.padelmanager.entity.Match.builder()
+                        .terrain(terrain)
+                        .organisateur(utilisateur)
+                        .dateHeureDebut(LocalDateTime.of(2026, 8, 1, 10, 0))
+                        .dateHeureFin(LocalDateTime.of(2026, 8, 1, 11, 30))
+                        .type(be.ephec.padelmanager.entity.TypeMatch.PRIVE)
+                        .statut(be.ephec.padelmanager.entity.StatutMatch.PROGRAMME)
+                        .devenuPublicAutomatiquement(false)
+                        .build());
+
+        // 1ère pénalité : OK
+        em.persistAndFlush(Penalite.builder()
+                .utilisateur(utilisateur)
+                .dateDebut(LocalDateTime.now())
+                .dateFin(LocalDateTime.now().plusWeeks(1))
+                .motif("CONVERSION_AUTO_PRIVE_PUBLIC")
+                .match(match)
+                .build());
+
+        // 2ème pénalité pour le même match : doit échouer (UK partial)
+        Penalite doublon = Penalite.builder()
+                .utilisateur(utilisateur)
+                .dateDebut(LocalDateTime.now())
+                .dateFin(LocalDateTime.now().plusWeeks(1))
+                .motif("CONVERSION_AUTO_PRIVE_PUBLIC")
+                .match(match)
+                .build();
+
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> em.persistAndFlush(doublon))
+                .isInstanceOfAny(
+                        org.springframework.dao.DataIntegrityViolationException.class,
+                        jakarta.persistence.PersistenceException.class)
+                .hasMessageContaining("uk_penalite_match");
+    }
 }
