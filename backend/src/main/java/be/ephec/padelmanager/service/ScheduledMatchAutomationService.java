@@ -1,12 +1,16 @@
 package be.ephec.padelmanager.service;
 
+import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.entity.Match;
 import be.ephec.padelmanager.entity.Penalite;
 import be.ephec.padelmanager.entity.StatutMatch;
 import be.ephec.padelmanager.entity.TypeMatch;
+import be.ephec.padelmanager.entity.Transaction;
+import be.ephec.padelmanager.entity.TypeTransaction;
 import be.ephec.padelmanager.repository.PenaliteRepository;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
+import be.ephec.padelmanager.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.math.BigDecimal;
 
 // Service d'automatisation des matchs EF-SYS
 // Le job @Scheduled orchestre les traitements automatiques 24h avant chaque match
@@ -27,6 +32,7 @@ public class ScheduledMatchAutomationService {
     private final MatchRepository matchRepository;
     private final InscriptionMatchRepository inscriptionMatchRepository;
     private final PenaliteRepository penaliteRepository;
+    private final TransactionRepository transactionRepository;
     private final Clock clock;
 
     // Job orchestrateur : exécute les 3 traitements dans l'ordre toutes les 15 min.
@@ -38,6 +44,7 @@ public class ScheduledMatchAutomationService {
         log.info("Démarrage cycle d'automatisation des matchs");
         libererPlacesNonPayees();
         convertirPrivesIncomplets();
+        facturerOrganisateursPublicsIncomplets();
         log.info("Fin cycle d'automatisation des matchs");
     }
 
@@ -120,6 +127,61 @@ public class ScheduledMatchAutomationService {
         }
         log.info("SYS : {} match(s) converti(s) PRIVE→PUBLIC sur {} match(s) à échéance",
                 totalConvertis, matchsAEcheance.size());
+    }
+
+
+    // Facture les organisateurs des matchs publics incomplets 24h avant le match.
+    // Pour chaque match PUBLIC en statut PROGRAMME à T-24h avec moins de 4 joueurs payés,
+    // on crée une transaction SOLDE_DU_ORGANISATEUR de 15€ × (places vides).
+    // Idempotence : la UK partial sur transaction(match_id) WHERE type='SOLDE_DU_ORGANISATEUR'
+    // garantit qu'une seule dette existe par match. On vérifie d'abord avec
+    // existsSoldeDuOrganisateurForMatch pour éviter de provoquer l'exception SQL inutilement
+    @Transactional
+    public void facturerOrganisateursPublicsIncomplets() {
+        LocalDateTime maintenant = LocalDateTime.now(clock);
+        LocalDateTime limite24h = maintenant.plusHours(24);
+
+        List<Match> matchsAEcheance = matchRepository.findMatchsAEcheance24h(maintenant, limite24h);
+
+        if (matchsAEcheance.isEmpty()) {
+            log.debug("Aucun match à échéance 24h, facturation non nécessaire");
+            return;
+        }
+
+        int totalFactures = 0;
+        for (Match match : matchsAEcheance) {
+            if (match.getType() != TypeMatch.PUBLIC) {
+                continue;  // On ne facture que les matchs PUBLIC
+            }
+            long joueursPayes = inscriptionMatchRepository.countJoueursPayesByMatchId(match.getId());
+            if (joueursPayes >= 4) {
+                continue;  // Match complet, rien à facturer
+            }
+
+            // Idempotence : on ne crée pas une 2ème dette si elle existe déjà
+            if (transactionRepository.existsSoldeDuOrganisateurForMatch(match.getId())) {
+                continue;
+            }
+
+            int placesVides = 4 - (int) joueursPayes;
+            BigDecimal montantDette = PricingConstants.PART_JOUEUR
+                    .multiply(BigDecimal.valueOf(placesVides));
+
+            Transaction dette = Transaction.builder()
+                    .utilisateur(match.getOrganisateur())
+                    .type(TypeTransaction.SOLDE_DU_ORGANISATEUR)
+                    .montant(montantDette)
+                    .match(match)
+                    .build();
+            transactionRepository.save(dette);
+
+            log.info("SYS : Match id={} ({}/4 payés) → facturation organisateur {} : {}€",
+                    match.getId(), joueursPayes,
+                    match.getOrganisateur().getMatricule(), montantDette);
+            totalFactures++;
+        }
+        log.info("SYS : {} match(s) facturé(s) sur {} match(s) à échéance",
+                totalFactures, matchsAEcheance.size());
     }
 
 }

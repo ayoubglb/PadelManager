@@ -19,7 +19,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         SELECT COALESCE(SUM(
             CASE
                 WHEN t.type IN (be.ephec.padelmanager.entity.TypeTransaction.RECHARGE,
-                                be.ephec.padelmanager.entity.TypeTransaction.REMBOURSEMENT)
+                                be.ephec.padelmanager.entity.TypeTransaction.REMBOURSEMENT,
+                                be.ephec.padelmanager.entity.TypeTransaction.REMBOURSEMENT_SOLDE_DU_ORGANISATEUR)
                 THEN t.montant
                 ELSE -t.montant
             END

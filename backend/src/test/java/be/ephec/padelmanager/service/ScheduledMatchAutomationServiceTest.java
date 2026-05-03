@@ -1,14 +1,18 @@
 package be.ephec.padelmanager.service;
 
+import be.ephec.padelmanager.config.PricingConstants;
 import be.ephec.padelmanager.entity.Match;
 import be.ephec.padelmanager.entity.StatutMatch;
 import be.ephec.padelmanager.entity.TypeMatch;
 import be.ephec.padelmanager.entity.Penalite;
 import be.ephec.padelmanager.entity.RoleUtilisateur;
 import be.ephec.padelmanager.entity.Utilisateur;
+import be.ephec.padelmanager.entity.Transaction;
+import be.ephec.padelmanager.entity.TypeTransaction;
 import be.ephec.padelmanager.repository.PenaliteRepository;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
+import be.ephec.padelmanager.repository.TransactionRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -39,6 +44,7 @@ class ScheduledMatchAutomationServiceTest {
     @Mock private MatchRepository matchRepository;
     @Mock private InscriptionMatchRepository inscriptionMatchRepository;
     @Mock private PenaliteRepository penaliteRepository;
+    @Mock private TransactionRepository transactionRepository;
 
     @Spy
     private Clock clock = Clock.fixed(
@@ -178,13 +184,81 @@ class ScheduledMatchAutomationServiceTest {
     }
 
     @Test
-    @DisplayName("executerJobsAutomatisation orchestre SYS-002 puis SYS-001")
-    void orchestrateurAppelleSys002EtSys001() {
+    @DisplayName("executerJobsAutomatisation orchestre SYS-002, SYS-001 et SYS-003")
+    void orchestrateurAppelleLes3Jobs() {
         when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of());
 
         service.executerJobsAutomatisation();
 
-        // findMatchsAEcheance24h appelé 2 fois (1 pour SYS-002, 1 pour SYS-001)
-        verify(matchRepository, times(2)).findMatchsAEcheance24h(any(), any());
+        // 3 appels : 1 par job (SYS-002, SYS-001, SYS-003)
+        verify(matchRepository, times(3)).findMatchsAEcheance24h(any(), any());
+    }
+
+    // ─── facturerOrganisateursPublicsIncomplets ──────────
+
+    @Test
+    @DisplayName("facturerOrganisateurs aucun match à échéance → no-op")
+    void facturerAucunMatch() {
+        when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of());
+
+        service.facturerOrganisateursPublicsIncomplets();
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("facturerOrganisateurs match PUBLIC incomplet (2/4) → SOLDE_DU_ORGANISATEUR de 30€")
+    void facturerPublicIncomplet() {
+        Match match = creerMatch(50L, LocalDateTime.now(clock).plusHours(20), TypeMatch.PUBLIC);
+        when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of(match));
+        when(inscriptionMatchRepository.countJoueursPayesByMatchId(50L)).thenReturn(2L);
+        when(transactionRepository.existsSoldeDuOrganisateurForMatch(50L)).thenReturn(false);
+
+        service.facturerOrganisateursPublicsIncomplets();
+
+        ArgumentCaptor<Transaction> txCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txCaptor.capture());
+        Transaction tx = txCaptor.getValue();
+        assertThat(tx.getType()).isEqualTo(TypeTransaction.SOLDE_DU_ORGANISATEUR);
+        assertThat(tx.getMatch()).isEqualTo(match);
+        // 2 places vides × 15€ = 30€
+        assertThat(tx.getMontant()).isEqualByComparingTo(new BigDecimal("30.00"));
+    }
+
+    @Test
+    @DisplayName("facturerOrganisateurs match PUBLIC complet (4/4) → pas de facturation")
+    void publicCompletPasFacture() {
+        Match match = creerMatch(50L, LocalDateTime.now(clock).plusHours(20), TypeMatch.PUBLIC);
+        when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of(match));
+        when(inscriptionMatchRepository.countJoueursPayesByMatchId(50L)).thenReturn(4L);
+
+        service.facturerOrganisateursPublicsIncomplets();
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("facturerOrganisateurs match PRIVE → ignoré")
+    void priveIgnore() {
+        Match match = creerMatch(50L, LocalDateTime.now(clock).plusHours(20), TypeMatch.PRIVE);
+        when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of(match));
+
+        service.facturerOrganisateursPublicsIncomplets();
+
+        verify(inscriptionMatchRepository, never()).countJoueursPayesByMatchId(any());
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("facturerOrganisateurs idempotence : si dette déjà existante → skip")
+    void detteDejaExistanteSkip() {
+        Match match = creerMatch(50L, LocalDateTime.now(clock).plusHours(20), TypeMatch.PUBLIC);
+        when(matchRepository.findMatchsAEcheance24h(any(), any())).thenReturn(List.of(match));
+        when(inscriptionMatchRepository.countJoueursPayesByMatchId(50L)).thenReturn(2L);
+        when(transactionRepository.existsSoldeDuOrganisateurForMatch(50L)).thenReturn(true);
+
+        service.facturerOrganisateursPublicsIncomplets();
+
+        verify(transactionRepository, never()).save(any());
     }
 }

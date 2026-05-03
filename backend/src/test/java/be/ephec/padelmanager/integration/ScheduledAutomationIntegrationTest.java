@@ -8,6 +8,9 @@ import be.ephec.padelmanager.entity.Terrain;
 import be.ephec.padelmanager.entity.TypeMatch;
 import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.entity.Penalite;
+import be.ephec.padelmanager.entity.Transaction;
+import be.ephec.padelmanager.entity.TypeTransaction;
+import be.ephec.padelmanager.repository.TransactionRepository;
 import be.ephec.padelmanager.repository.PenaliteRepository;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
@@ -26,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,6 +50,7 @@ class ScheduledAutomationIntegrationTest {
     @Autowired private UtilisateurRepository utilisateurRepository;
     @Autowired private TerrainRepository terrainRepository;
     @Autowired private PenaliteRepository penaliteRepository;
+    @Autowired private TransactionRepository transactionRepository;
 
     @Test
     @DisplayName("Marque les inscriptions non payées en LIBERE_NON_PAIEMENT")
@@ -165,5 +170,77 @@ class ScheduledAutomationIntegrationTest {
 
         Match matchApres = matchRepository.findById(match.getId()).orElseThrow();
         assertThat(matchApres.getDevenuPublicAutomatiquement()).isFalse();  // Pas modifié
+    }
+
+    @Test
+    @DisplayName("SYS : crée SOLDE_DU_ORGANISATEUR pour match PUBLIC incomplet")
+    void facturerMatchPublicIncomplet() {
+        Utilisateur orga = utilisateurRepository
+                .findByEmail("membre.site@padelmanager.be").orElseThrow();
+        Terrain terrain = terrainRepository.findAll().stream()
+                .filter(t -> t.getSite().getId().equals(orga.getSiteRattachement().getId()))
+                .findFirst().orElseThrow();
+
+        // Match PUBLIC dans 18h, sans aucune inscription (4 places vides)
+        Match match = matchRepository.save(Match.builder()
+                .terrain(terrain)
+                .organisateur(orga)
+                .dateHeureDebut(LocalDateTime.now().plusHours(18))
+                .dateHeureFin(LocalDateTime.now().plusHours(18).plusMinutes(90))
+                .type(TypeMatch.PUBLIC)
+                .statut(StatutMatch.PROGRAMME)
+                .devenuPublicAutomatiquement(false)
+                .build());
+
+        // Exécute le job
+        automationService.facturerOrganisateursPublicsIncomplets();
+
+        // Vérifie : transaction SOLDE_DU_ORGANISATEUR créée pour ce match
+        Transaction dette = transactionRepository.findAll().stream()
+                .filter(t -> t.getMatch() != null && t.getMatch().getId().equals(match.getId()))
+                .filter(t -> t.getType() == TypeTransaction.SOLDE_DU_ORGANISATEUR)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Aucune dette SOLDE_DU_ORGANISATEUR créée pour le match " + match.getId()));
+
+        // 4 places vides × 15€ = 60€
+        assertThat(dette.getMontant()).isEqualByComparingTo(new BigDecimal("60.00"));
+        assertThat(dette.getUtilisateur().getId()).isEqualTo(orga.getId());
+    }
+
+    @Test
+    @DisplayName("SYS idempotence : second appel ne crée pas de doublon")
+    void facturerIdempotence() {
+        Utilisateur orga = utilisateurRepository
+                .findByEmail("membre.site@padelmanager.be").orElseThrow();
+        Terrain terrain = terrainRepository.findAll().stream()
+                .filter(t -> t.getSite().getId().equals(orga.getSiteRattachement().getId()))
+                .findFirst().orElseThrow();
+
+        Match match = matchRepository.save(Match.builder()
+                .terrain(terrain)
+                .organisateur(orga)
+                .dateHeureDebut(LocalDateTime.now().plusHours(20))
+                .dateHeureFin(LocalDateTime.now().plusHours(20).plusMinutes(90))
+                .type(TypeMatch.PUBLIC)
+                .statut(StatutMatch.PROGRAMME)
+                .devenuPublicAutomatiquement(false)
+                .build());
+
+        // 1er appel
+        automationService.facturerOrganisateursPublicsIncomplets();
+        long dettesApres1 = transactionRepository.findAll().stream()
+                .filter(t -> t.getMatch() != null && t.getMatch().getId().equals(match.getId()))
+                .filter(t -> t.getType() == TypeTransaction.SOLDE_DU_ORGANISATEUR)
+                .count();
+        assertThat(dettesApres1).isEqualTo(1);
+
+        // 2ème appel : ne doit pas créer de doublon
+        automationService.facturerOrganisateursPublicsIncomplets();
+        long dettesApres2 = transactionRepository.findAll().stream()
+                .filter(t -> t.getMatch() != null && t.getMatch().getId().equals(match.getId()))
+                .filter(t -> t.getType() == TypeTransaction.SOLDE_DU_ORGANISATEUR)
+                .count();
+        assertThat(dettesApres2).isEqualTo(1);
     }
 }

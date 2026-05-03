@@ -264,6 +264,22 @@ class TransactionRepositoryTest {
         assertThat(resultats).isEmpty();
     }
 
+    @Test
+    @DisplayName("calculerSoldeUtilisateur ajoute REMBOURSEMENT_SOLDE_DU_ORGANISATEUR au crédit")
+    void calculerSoldeAvecRemboursementSoldeDu() {
+        // Recharge 100€
+        creer(TypeTransaction.RECHARGE, "100.00", null);
+        // Dette de 30€ (organisateur d'un match public incomplet)
+        creer(TypeTransaction.SOLDE_DU_ORGANISATEUR, "30.00", match);
+        // Contre-passation de 15€ (un joueur a rejoint)
+        creer(TypeTransaction.REMBOURSEMENT_SOLDE_DU_ORGANISATEUR, "15.00", match);
+
+        BigDecimal solde = transactionRepository.calculerSoldeUtilisateur(utilisateur.getId());
+
+        // 100 - 30 + 15 = 85€
+        assertThat(solde).isEqualByComparingTo(new BigDecimal("85.00"));
+    }
+
 
 
 }
