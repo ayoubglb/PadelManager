@@ -85,5 +85,15 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
                               @Param("aVenir") boolean aVenir,
                               @Param("maintenant") LocalDateTime maintenant);
 
+    // Récupère tous les matchs en statut PROGRAMME dont la date est dans la fenêtre [maintenant, limite24h].
+     //  Utilisé par les jobs @Scheduled
+    @Query("""
+        SELECT m FROM Match m
+        WHERE m.statut = be.ephec.padelmanager.entity.StatutMatch.PROGRAMME
+          AND m.dateHeureDebut BETWEEN :maintenant AND :limite24h
+        """)
+    List<Match> findMatchsAEcheance24h(@Param("maintenant") LocalDateTime maintenant,
+                                       @Param("limite24h") LocalDateTime limite24h);
+
 
 }
