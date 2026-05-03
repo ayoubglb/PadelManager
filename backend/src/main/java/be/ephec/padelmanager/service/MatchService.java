@@ -445,6 +445,24 @@ public class MatchService {
         log.info("Match public rejoint : match={}, joueur={}, montant={}€",
                 match.getId(), joueur.getMatricule(), PricingConstants.PART_JOUEUR);
 
+        // Si l'organisateur a une dette pour ce match
+        // à T-24h, on contre-passe 15€ au crédit pour cette place.
+        if (transactionRepository.existsSoldeDuOrganisateurForMatch(match.getId())) {
+            Transaction remboursementOrga = Transaction.builder()
+                    .utilisateur(match.getOrganisateur())
+                    .type(TypeTransaction.REMBOURSEMENT_SOLDE_DU_ORGANISATEUR)
+                    .montant(PricingConstants.PART_JOUEUR)
+                    .match(match)
+                    .build();
+            transactionRepository.save(remboursementOrga);
+            log.info("Contre-passation REMBOURSEMENT_SOLDE_DU_ORGANISATEUR de {}€ "
+                            + "pour organisateur={} (joueur={} a rejoint match={} après dette)",
+                    PricingConstants.PART_JOUEUR,
+                    match.getOrganisateur().getMatricule(),
+                    joueur.getMatricule(),
+                    match.getId());
+        }
+
         return new RejoindreMatchResponse(
                 inscriptionMatchMapper.toDto(inscription),
                 transactionMapper.toDto(transaction));

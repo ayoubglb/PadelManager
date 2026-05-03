@@ -23,6 +23,6 @@
     <include file="db/changelog/changes/012-seed-soldes-initiaux-dev.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/013-create-table-penalite.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/014-uk-penalite-match.sql" relativeToChangelogFile="false"/>
-
+    <include file="db/changelog/changes/015-extend-transaction-types.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

@@ -11,6 +11,7 @@ import be.ephec.padelmanager.entity.StatutInscription;
 import be.ephec.padelmanager.entity.StatutMatch;
 import be.ephec.padelmanager.entity.Transaction;
 import be.ephec.padelmanager.entity.TypeMatch;
+import be.ephec.padelmanager.entity.Transaction;
 import be.ephec.padelmanager.entity.TypeTransaction;
 import be.ephec.padelmanager.entity.Utilisateur;
 import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
@@ -35,10 +36,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 // Tests unitaires Mockito de MatchService.rejoindreMatchPublic
 @ExtendWith(MockitoExtension.class)
@@ -243,6 +241,58 @@ class MatchServiceRejoindrePublicTest {
         // Vérifie qu'on a bien appelé findByIdForUpdate (verrou) et pas findById classique
         verify(matchRepository).findByIdForUpdate(50L);
         verify(matchRepository, never()).findById(50L);
+    }
+
+    // ─── contre-passation REMBOURSEMENT_SOLDE_DU_ORGANISATEUR ──────────
+
+    @Test
+    @DisplayName("rejoindrePublic crée REMBOURSEMENT_SOLDE_DU_ORGANISATEUR si dette existe (CF-RS-030)")
+    void contrePasseSiDetteOrganisateurExiste() {
+        when(matchRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(match));
+        when(inscriptionMatchRepository.existsByMatchIdAndJoueurId(50L, 200L)).thenReturn(false);
+        when(inscriptionMatchRepository.findInscritsByMatchId(50L)).thenReturn(List.of());
+        when(soldeService.disposeAuMoinsDe(200L, PricingConstants.PART_JOUEUR)).thenReturn(true);
+        when(inscriptionMatchRepository.save(any(InscriptionMatch.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(transactionRepository.save(any(Transaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        // Dette existe pour ce match
+        when(transactionRepository.existsSoldeDuOrganisateurForMatch(50L)).thenReturn(true);
+
+        matchService.rejoindreMatchPublic(50L, joueur);
+
+        // 2 transactions doivent être sauvegardées : PAIEMENT_MATCH et REMBOURSEMENT_SOLDE_DU_ORGANISATEUR
+        ArgumentCaptor<Transaction> txCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository, times(2)).save(txCaptor.capture());
+
+        List<Transaction> transactions = txCaptor.getAllValues();
+        assertThat(transactions).anyMatch(t ->
+                t.getType() == TypeTransaction.PAIEMENT_MATCH
+                        && t.getUtilisateur().equals(joueur));
+        assertThat(transactions).anyMatch(t ->
+                t.getType() == TypeTransaction.REMBOURSEMENT_SOLDE_DU_ORGANISATEUR
+                        && t.getUtilisateur().equals(match.getOrganisateur())
+                        && t.getMontant().compareTo(PricingConstants.PART_JOUEUR) == 0);
+    }
+
+    @Test
+    @DisplayName("rejoindrePublic NE crée PAS de contre-passation si pas de dette")
+    void pasDeContrePassationSiPasDeDette() {
+        when(matchRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(match));
+        when(inscriptionMatchRepository.existsByMatchIdAndJoueurId(50L, 200L)).thenReturn(false);
+        when(inscriptionMatchRepository.findInscritsByMatchId(50L)).thenReturn(List.of());
+        when(soldeService.disposeAuMoinsDe(200L, PricingConstants.PART_JOUEUR)).thenReturn(true);
+        when(inscriptionMatchRepository.save(any(InscriptionMatch.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(transactionRepository.save(any(Transaction.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        // Pas de dette
+        when(transactionRepository.existsSoldeDuOrganisateurForMatch(50L)).thenReturn(false);
+
+        matchService.rejoindreMatchPublic(50L, joueur);
+
+        // 1 seule transaction : PAIEMENT_MATCH (pas de contre-passation)
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
 }
