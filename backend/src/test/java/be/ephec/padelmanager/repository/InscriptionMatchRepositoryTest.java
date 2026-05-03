@@ -168,4 +168,40 @@ class InscriptionMatchRepositoryTest {
 
         assertThat(resultats).isEmpty();
     }
+
+    // ─── marquerLibereesNonPayees ──────────
+
+    @Test
+    @DisplayName("marquerLibereesNonPayees passe paye=false → LIBERE_NON_PAIEMENT et garde les payées en INSCRIT")
+    void marquerLibereesNonPayees() {
+        // Inscription joueur1 (organisateur, payée) → doit rester INSCRIT
+        em.persistAndFlush(InscriptionMatch.builder()
+                .match(match).joueur(joueur1)
+                .paye(true).statut(StatutInscription.INSCRIT)
+                .estOrganisateur(true).build());
+
+        // Inscription joueur2 (invité, NON payée) → doit passer LIBERE_NON_PAIEMENT
+        em.persistAndFlush(InscriptionMatch.builder()
+                .match(match).joueur(joueur2)
+                .paye(false).statut(StatutInscription.INSCRIT)
+                .estOrganisateur(false).build());
+
+        int liberees = inscriptionMatchRepository.marquerLibereesNonPayees(match.getId());
+        em.flush();
+        em.clear();
+
+        assertThat(liberees).isEqualTo(1);
+
+        List<InscriptionMatch> apres = inscriptionMatchRepository.findByMatchId(match.getId());
+        assertThat(apres).hasSize(2);  // pas de DELETE, juste marquage
+        assertThat(apres).anyMatch(i ->
+                i.getStatut() == StatutInscription.INSCRIT
+                        && Boolean.TRUE.equals(i.getPaye()));
+        assertThat(apres).anyMatch(i ->
+                i.getStatut() == StatutInscription.LIBERE_NON_PAIEMENT
+                        && Boolean.FALSE.equals(i.getPaye()));
+    }
+
+
+
 }

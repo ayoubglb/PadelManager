@@ -3,6 +3,7 @@ package be.ephec.padelmanager.repository;
 import be.ephec.padelmanager.entity.InscriptionMatch;
 import be.ephec.padelmanager.entity.StatutInscription;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -65,4 +66,16 @@ public interface InscriptionMatchRepository extends JpaRepository<InscriptionMat
         """)
     List<InscriptionMatch> findByMatchIdInAndJoueurId(@Param("matchIds") List<Long> matchIds,
                                                       @Param("joueurId") Long joueurId);
+
+    //  Marque les inscriptions non payées d'un match comme LIBERE_NON_PAIEMENT
+    //  Conserve l'historique de l'invitation initiale plutôt que de supprimer la ligne
+    @Modifying
+    @Query("""
+        UPDATE InscriptionMatch i
+        SET i.statut = be.ephec.padelmanager.entity.StatutInscription.LIBERE_NON_PAIEMENT
+        WHERE i.match.id = :matchId
+          AND i.paye = false
+          AND i.statut = be.ephec.padelmanager.entity.StatutInscription.INSCRIT
+        """)
+    int marquerLibereesNonPayees(@Param("matchId") Long matchId);
 }

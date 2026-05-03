@@ -362,4 +362,35 @@ class MatchRepositoryTest {
         assertThat(resultats).extracting(Match::getId).doesNotContain(autreMatch.getId());
     }
 
+    // ─── findMatchsAEcheance24h  ──────────
+
+    @Test
+    @DisplayName("findMatchsAEcheance24h retourne les matchs PROGRAMME dans la fenêtre 24h")
+    void findMatchsAEcheance24hRetourneLesBons() {
+        Match dans18h = creer(LocalDateTime.now().plusHours(18),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+        Match dans30h = creer(LocalDateTime.now().plusHours(30),
+                TypeMatch.PRIVE, StatutMatch.PROGRAMME, false);
+
+        List<Match> resultats = matchRepository.findMatchsAEcheance24h(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(24));
+
+        assertThat(resultats).extracting(Match::getId).contains(dans18h.getId());
+        assertThat(resultats).extracting(Match::getId).doesNotContain(dans30h.getId());
+    }
+
+    @Test
+    @DisplayName("findMatchsAEcheance24h ignore les matchs ANNULE")
+    void findMatchsAEcheance24hIgnoreAnnules() {
+        Match annule = creer(LocalDateTime.now().plusHours(18),
+                TypeMatch.PRIVE, StatutMatch.ANNULE, false);
+
+        List<Match> resultats = matchRepository.findMatchsAEcheance24h(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(24));
+
+        assertThat(resultats).extracting(Match::getId).doesNotContain(annule.getId());
+    }
+
 }
