@@ -7,6 +7,8 @@ import be.ephec.padelmanager.entity.StatutMatch;
 import be.ephec.padelmanager.entity.Terrain;
 import be.ephec.padelmanager.entity.TypeMatch;
 import be.ephec.padelmanager.entity.Utilisateur;
+import be.ephec.padelmanager.entity.Penalite;
+import be.ephec.padelmanager.repository.PenaliteRepository;
 import be.ephec.padelmanager.repository.InscriptionMatchRepository;
 import be.ephec.padelmanager.repository.MatchRepository;
 import be.ephec.padelmanager.repository.TerrainRepository;
@@ -43,6 +45,7 @@ class ScheduledAutomationIntegrationTest {
     @Autowired private InscriptionMatchRepository inscriptionMatchRepository;
     @Autowired private UtilisateurRepository utilisateurRepository;
     @Autowired private TerrainRepository terrainRepository;
+    @Autowired private PenaliteRepository penaliteRepository;
 
     @Test
     @DisplayName("Marque les inscriptions non payées en LIBERE_NON_PAIEMENT")
@@ -93,5 +96,74 @@ class ScheduledAutomationIntegrationTest {
 
         assertThat(orgaApres.getStatut()).isEqualTo(StatutInscription.INSCRIT);
         assertThat(inviteApres.getStatut()).isEqualTo(StatutInscription.LIBERE_NON_PAIEMENT);
+    }
+
+    @Test
+    @DisplayName("Convertit un match PRIVE incomplet en PUBLIC + crée pénalité 1 semaine")
+    void convertirMatchPriveIncompletEnPublic() {
+        Utilisateur orga = utilisateurRepository
+                .findByEmail("membre.site@padelmanager.be").orElseThrow();
+        Terrain terrain = terrainRepository.findAll().stream()
+                .filter(t -> t.getSite().getId().equals(orga.getSiteRattachement().getId()))
+                .findFirst().orElseThrow();
+
+        // Match PRIVE dans 18h, sans inscription (donc incomplet)
+        Match match = matchRepository.save(Match.builder()
+                .terrain(terrain)
+                .organisateur(orga)
+                .dateHeureDebut(LocalDateTime.now().plusHours(18))
+                .dateHeureFin(LocalDateTime.now().plusHours(18).plusMinutes(90))
+                .type(TypeMatch.PRIVE)
+                .statut(StatutMatch.PROGRAMME)
+                .devenuPublicAutomatiquement(false)
+                .build());
+
+        // Exécute le job
+        automationService.convertirPrivesIncomplets();
+
+        // Match converti en PUBLIC
+        Match matchApres = matchRepository.findById(match.getId()).orElseThrow();
+        assertThat(matchApres.getType()).isEqualTo(TypeMatch.PUBLIC);
+        assertThat(matchApres.getDevenuPublicAutomatiquement()).isTrue();
+
+        // Pénalité créée pour CE match précisément (au lieu de compter le total)
+        Penalite penalite = penaliteRepository.findAll().stream()
+                .filter(p -> p.getMatch() != null && p.getMatch().getId().equals(match.getId()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Aucune pénalité créée pour le match " + match.getId()));
+        assertThat(penalite.getMotif()).isEqualTo("CONVERSION_AUTO_PRIVE_PUBLIC");
+        assertThat(penalite.getUtilisateur().getId()).isEqualTo(orga.getId());
+    }
+
+    @Test
+    @DisplayName("Ne convertit pas un match PUBLIC déjà existant (idempotence)")
+    void publicNonReconverti() {
+        Utilisateur orga = utilisateurRepository
+                .findByEmail("membre.site@padelmanager.be").orElseThrow();
+        Terrain terrain = terrainRepository.findAll().stream()
+                .filter(t -> t.getSite().getId().equals(orga.getSiteRattachement().getId()))
+                .findFirst().orElseThrow();
+
+        // Match déjà PUBLIC dans 18h
+        Match match = matchRepository.save(Match.builder()
+                .terrain(terrain)
+                .organisateur(orga)
+                .dateHeureDebut(LocalDateTime.now().plusHours(18))
+                .dateHeureFin(LocalDateTime.now().plusHours(18).plusMinutes(90))
+                .type(TypeMatch.PUBLIC)
+                .statut(StatutMatch.PROGRAMME)
+                .devenuPublicAutomatiquement(false)
+                .build());
+
+        long penalitesAvant = penaliteRepository.count();
+
+        automationService.convertirPrivesIncomplets();
+
+        // Pas de pénalité créée (match déjà PUBLIC)
+        assertThat(penaliteRepository.count()).isEqualTo(penalitesAvant);
+
+        Match matchApres = matchRepository.findById(match.getId()).orElseThrow();
+        assertThat(matchApres.getDevenuPublicAutomatiquement()).isFalse();  // Pas modifié
     }
 }
