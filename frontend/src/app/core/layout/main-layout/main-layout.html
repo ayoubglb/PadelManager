@@ -37,9 +37,9 @@
       <span class="flex-1"></span>
 
       @if (auth.profil()) {
-        <span class="hidden md:inline text-sm text-gray-600 mr-4">
-          Solde : <span class="font-semibold">— €</span>
-        </span>
+        <div class="hidden md:flex items-center mr-4">
+          <app-solde-badge></app-solde-badge>
+        </div>
       }
 
       <button mat-button [matMenuTriggerFor]="userMenu">

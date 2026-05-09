@@ -15,6 +15,7 @@ import { map } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { Role } from '../../api/auth.types';
 import {TransactionService} from '../../api/transaction.service';
+import { SoldeBadge } from '../../../shared/components/solde-badge/solde-badge';
 
 interface NavItem {
   label: string;
@@ -68,6 +69,7 @@ const NAV_ITEMS: NavItem[] = [
     MatButtonModule,
     MatMenuModule,
     MatDividerModule,
+    SoldeBadge
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
