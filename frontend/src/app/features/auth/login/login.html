@@ -1,0 +1,62 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+  <mat-card class="w-full max-w-md">
+    <mat-card-header class="!flex !flex-col !items-center !pb-4">
+      <mat-icon class="!text-5xl !w-12 !h-12 text-blue-600">sports_tennis</mat-icon>
+      <mat-card-title class="!text-2xl !mt-2">Padel Manager</mat-card-title>
+      <mat-card-subtitle>Connexion à votre compte</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-2">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Email ou matricule</mat-label>
+          <input matInput type="text" formControlName="login" autocomplete="username" />
+          @if (form.controls.login.hasError('required') && form.controls.login.touched) {
+            <mat-error>Ce champ est requis</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Mot de passe</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="motDePasse"
+            autocomplete="current-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword.set(!hidePassword())"
+            [attr.aria-label]="'Afficher/masquer le mot de passe'"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.motDePasse.hasError('required') && form.controls.motDePasse.touched) {
+            <mat-error>Ce champ est requis</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          class="!mt-2 !h-12"
+          [disabled]="form.invalid || loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Se connecter
+          }
+        </button>
+
+        <p class="text-center text-sm text-gray-600 mt-4">
+          Pas encore de compte ?
+          <a routerLink="/register" class="text-blue-600 hover:underline">S'inscrire</a>
+        </p>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

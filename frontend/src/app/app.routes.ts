@@ -1,7 +1,62 @@
 import { Routes } from '@angular/router';
-import { Home } from './home/home';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: Home, pathMatch: 'full' },
-  { path: '**', redirectTo: '' }
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login').then((m) => m.Login),
+  },
+
+  {
+    path: '',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./core/layout/main-layout/main-layout').then((m) => m.MainLayout),
+    children: [
+      { path: '', redirectTo: 'planning', pathMatch: 'full' },
+      {
+        path: 'planning',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
+        path: 'matchs/publics',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
+        path: 'matchs/mes-matchs',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
+        path: 'transactions',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
+        path: 'profil',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
+        path: 'admin',
+        loadChildren: () =>
+          import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+      },
+    ],
+  },
+
+  { path: '**', redirectTo: '' },
 ];

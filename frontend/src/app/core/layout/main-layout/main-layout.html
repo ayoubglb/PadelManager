@@ -1,0 +1,74 @@
+<mat-sidenav-container class="!h-screen">
+  <mat-sidenav
+    #sidenav
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="!isHandset() && sidenavOpened()"
+    class="!w-64 !border-r !border-gray-200"
+  >
+    <div class="flex items-center gap-2 p-4 border-b border-gray-200">
+      <mat-icon class="text-blue-600">sports_tennis</mat-icon>
+      <span class="font-semibold text-lg">Padel Manager</span>
+    </div>
+
+    <mat-nav-list>
+      @for (item of visibleItems(); track item.route) {
+        <mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="!bg-blue-50 !text-blue-700"
+          (click)="isHandset() && sidenav.close()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </mat-list-item>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="bg-gray-50">
+    <mat-toolbar class="!bg-white !border-b !border-gray-200 !shadow-sm">
+      <button
+        mat-icon-button
+        (click)="isHandset() ? sidenav.toggle() : toggleSidenav()"
+        aria-label="Menu"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="flex-1"></span>
+
+      @if (auth.profil()) {
+        <span class="hidden md:inline text-sm text-gray-600 mr-4">
+          Solde : <span class="font-semibold">— €</span>
+        </span>
+      }
+
+      <button mat-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+        <span class="ml-2 hidden sm:inline">{{ auth.displayName() }}</span>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="px-4 py-2 border-b border-gray-100">
+          <div class="font-semibold text-sm">{{ auth.displayName() }}</div>
+          <div class="text-xs text-gray-500">{{ auth.auth()?.email }}</div>
+          <div class="text-xs text-gray-500 mt-1">
+            {{ auth.auth()?.matricule }} • {{ auth.currentRole() }}
+          </div>
+        </div>
+        <button mat-menu-item routerLink="/profil">
+          <mat-icon>person</mat-icon>
+          <span>Mon profil</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Se déconnecter</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="p-4 md:p-6">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
