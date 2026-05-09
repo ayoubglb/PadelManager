@@ -27,7 +27,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Coût 10 par défaut — CF-AA-005
+        // Coût 10 par défaut
         return new BCryptPasswordEncoder();
     }
 
