@@ -79,12 +79,6 @@ export class MainLayout {
   private breakpoint = inject(BreakpointObserver);
   private transactionService = inject(TransactionService);
 
-  constructor() {
-    // Log le solde quand il change
-    effect(() => {
-      console.log('Solde courant:', this.transactionService.solde());
-    });
-  }
 
   // Signal "écran mobile/tablette"
   isHandset = toSignal(

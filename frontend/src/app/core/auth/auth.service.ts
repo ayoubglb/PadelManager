@@ -45,20 +45,12 @@ export class AuthService {
   });
 
   constructor() {
-    // Si l'utilisateur est restauré depuis localStorage au démarrage
-    // (ex : après un F5), rafraîchir le solde.
-    //
-    // queueMicrotask : différer l'appel pour éviter une dépendance circulaire.
-    // Le authInterceptor injecte AuthService, donc déclencher un appel HTTP
-    // pendant la construction d'AuthService crée un cycle. En reportant
-    // l'appel à la prochaine micro-tâche, on garantit que AuthService est
-    // entièrement construit avant que l'interceptor ne tente de l'injecter.
     if (this._auth() !== null) {
       queueMicrotask(() => {
         this.transactionService.refreshSolde().subscribe({
           error: () => {
-            // En cas d'erreur (token expiré, etc.), on ne fait rien :
-            // le prochain appel HTTP renverra 401 et l'interceptor déclenchera le logout.
+            // Erreur ignorée : si le token est expiré, le prochain appel HTTP
+            // déclenchera le logout via l'interceptor (401).
           },
         });
       });
