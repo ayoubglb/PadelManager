@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {Component, computed, effect, inject, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,6 +14,7 @@ import { map } from 'rxjs';
 
 import { AuthService } from '../../auth/auth.service';
 import { Role } from '../../api/auth.types';
+import {TransactionService} from '../../api/transaction.service';
 
 interface NavItem {
   label: string;
@@ -74,6 +75,14 @@ const NAV_ITEMS: NavItem[] = [
 export class MainLayout {
   protected auth = inject(AuthService);
   private breakpoint = inject(BreakpointObserver);
+  private transactionService = inject(TransactionService);
+
+  constructor() {
+    // Log le solde quand il change
+    effect(() => {
+      console.log('Solde courant:', this.transactionService.solde());
+    });
+  }
 
   // Signal "écran mobile/tablette"
   isHandset = toSignal(
