@@ -10,6 +10,7 @@ import {
   Role,
 } from '../api/auth.types';
 import { UtilisateurProfil } from '../api/utilisateur.types';
+import { TransactionService } from '../api/transaction.service';
 
 const TOKEN_KEY = 'padel_token';
 const AUTH_KEY = 'padel_auth';
@@ -19,6 +20,7 @@ const PROFIL_KEY = 'padel_profil';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private transactionService = inject(TransactionService);
 
   // État réactif via Signals
   private _auth = signal<AuthResponse | null>(this.loadFromStorage(AUTH_KEY));
@@ -41,6 +43,19 @@ export class AuthService {
     const a = this._auth();
     return a ? `${a.prenom} ${a.nom}` : '';
   });
+
+  constructor() {
+    if (this._auth() !== null) {
+      queueMicrotask(() => {
+        this.transactionService.refreshSolde().subscribe({
+          error: () => {
+            // Erreur ignorée : si le token est expiré, le prochain appel HTTP
+            // déclenchera le logout via l'interceptor (401).
+          },
+        });
+      });
+    }
+  }
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
@@ -74,16 +89,23 @@ export class AuthService {
         tap((profil) => {
           this._profil.set(profil);
           localStorage.setItem(PROFIL_KEY, JSON.stringify(profil));
+          // Rafraîchir le solde dès que le profil est chargé
+          this.transactionService.refreshSolde().subscribe({
+            error: () => {
+              // En cas d'erreur on ne bloque pas le login,
+              // le badge solde restera à null
+            },
+          });
         })
       );
   }
-
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(PROFIL_KEY);
     this._auth.set(null);
     this._profil.set(null);
+    this.transactionService.clear();
     this.router.navigate(['/login']);
   }
 

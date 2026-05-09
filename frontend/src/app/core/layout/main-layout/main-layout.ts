@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {Component, computed, effect, inject, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,6 +14,8 @@ import { map } from 'rxjs';
 
 import { AuthService } from '../../auth/auth.service';
 import { Role } from '../../api/auth.types';
+import {TransactionService} from '../../api/transaction.service';
+import { SoldeBadge } from '../../../shared/components/solde-badge/solde-badge';
 
 interface NavItem {
   label: string;
@@ -67,6 +69,7 @@ const NAV_ITEMS: NavItem[] = [
     MatButtonModule,
     MatMenuModule,
     MatDividerModule,
+    SoldeBadge
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
@@ -74,6 +77,8 @@ const NAV_ITEMS: NavItem[] = [
 export class MainLayout {
   protected auth = inject(AuthService);
   private breakpoint = inject(BreakpointObserver);
+  private transactionService = inject(TransactionService);
+
 
   // Signal "écran mobile/tablette"
   isHandset = toSignal(

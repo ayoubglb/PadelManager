@@ -1,0 +1,15 @@
+<div
+  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 border border-gray-200"
+  [matTooltip]="tooltip()"
+>
+  <mat-icon class="!text-base !w-4 !h-4" [class]="couleurClasse()">
+    account_balance_wallet
+  </mat-icon>
+  <span class="text-sm font-semibold" [class]="couleurClasse()">
+    @if (solde() === null) {
+      —
+    } @else {
+      {{ solde() | currency:'EUR':'symbol':'1.2-2':'fr-BE' }}
+    }
+  </span>
+</div>
