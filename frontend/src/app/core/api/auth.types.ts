@@ -6,8 +6,8 @@ export type Role =
   | 'ADMIN_GLOBAL';
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+  login: string;       // email ou matricule
+  motDePasse: string;
 }
 
 export interface RegisterRequest {
