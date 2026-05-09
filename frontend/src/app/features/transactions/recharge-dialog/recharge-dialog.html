@@ -1,0 +1,61 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">account_balance_wallet</mat-icon>
+  Recharger mon compte
+</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-gray-600 mb-4">
+    Sélectionnez un montant prédéfini ou saisissez un montant personnalisé.
+  </p>
+
+  <div class="flex flex-wrap gap-2 mb-4">
+    @for (montant of montantsPredefinis; track montant) {
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="setMontant(montant)"
+        [color]="form.controls.montant.value === montant ? 'primary' : ''"
+      >
+        {{ montant }} €
+      </button>
+    }
+  </div>
+
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Montant personnalisé</mat-label>
+      <input matInput type="number" formControlName="montant" min="1" max="1000" step="1" />
+      <span matTextSuffix>€</span>
+      @if (form.controls.montant.hasError('required')) {
+        <mat-error>Montant requis</mat-error>
+      }
+      @if (form.controls.montant.hasError('min')) {
+        <mat-error>Le montant doit être supérieur à 0</mat-error>
+      }
+      @if (form.controls.montant.hasError('max')) {
+        <mat-error>Le montant ne peut pas dépasser 1000 €</mat-error>
+      }
+    </mat-form-field>
+  </form>
+
+  <p class="text-xs text-gray-500 italic">
+    💡 Le paiement réel n'est pas implémenté dans ce projet : le rechargement
+    est validé immédiatement (paiement simulé).
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="loading()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="form.invalid || loading()"
+  >
+    @if (loading()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Recharger
+    }
+  </button>
+</mat-dialog-actions>

@@ -39,9 +39,7 @@ export const routes: Routes = [
       {
         path: 'transactions',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
-          ),
+          import('./features/transactions/transactions').then((m) => m.Transactions),
       },
       {
         path: 'profil',
