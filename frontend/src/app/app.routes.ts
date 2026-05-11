@@ -49,9 +49,7 @@ export const routes: Routes = [
       {
         path: 'profil',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
-          ),
+          import('./features/profil/profil').then((m) => m.Profil),
       },
       {
         path: 'admin',
