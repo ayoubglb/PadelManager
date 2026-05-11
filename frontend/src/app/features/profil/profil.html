@@ -1,0 +1,156 @@
+@if (profil(); as user) {
+  <div class="flex flex-col gap-4 max-w-4xl mx-auto">
+
+    <!-- En-tête -->
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Mon profil</h1>
+        <p class="text-sm text-gray-500">Consultez vos informations personnelles</p>
+      </div>
+      <button mat-stroked-button color="warn" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Se déconnecter
+      </button>
+    </div>
+
+    <!-- Pénalité active (visible uniquement si présente) -->
+    @if (hasPenalite() && penaliteActive(); as p) {
+      <mat-card class="!bg-red-50 !border-l-4 !border-red-500">
+        <mat-card-content class="!flex !items-start !gap-3 !p-4">
+          <mat-icon class="!text-red-600 !text-3xl !w-8 !h-8">warning</mat-icon>
+          <div class="flex-1">
+            <div class="font-semibold text-red-800 mb-1">Pénalité active</div>
+            <p class="text-sm text-red-700 mb-2">{{ p.motif }}</p>
+            <div class="text-xs text-red-700 space-y-0.5">
+              <div>
+                <strong>Début :</strong>
+                {{ p.dateDebut | date:'dd/MM/yyyy HH:mm':'':'fr-BE' }}
+              </div>
+              <div>
+                <strong>Fin :</strong>
+                {{ p.dateFin | date:'dd/MM/yyyy HH:mm':'':'fr-BE' }}
+              </div>
+              <div>
+                <strong>Match d'origine :</strong> #{{ p.matchId }}
+              </div>
+            </div>
+            <p class="text-xs text-red-600 italic mt-2">
+              Vous ne pouvez pas effectuer de nouvelle réservation jusqu'à la fin de cette période.
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Grid principal : 2 colonnes desktop, 1 colonne mobile -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Section Identité -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title class="!flex !items-center !gap-2 !text-lg">
+            <mat-icon class="text-blue-600">person</mat-icon>
+            Identité
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <dl class="space-y-3">
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Prénom</dt>
+              <dd class="text-base text-gray-900">{{ user.prenom }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Nom</dt>
+              <dd class="text-base text-gray-900">{{ user.nom }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Email</dt>
+              <dd class="text-base text-gray-900 break-all">{{ user.email }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Téléphone</dt>
+              <dd class="text-base text-gray-900">{{ user.telephone }}</dd>
+            </div>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Section Compte -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title class="!flex !items-center !gap-2 !text-lg">
+            <mat-icon class="text-blue-600">badge</mat-icon>
+            Compte
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <dl class="space-y-3">
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Matricule</dt>
+              <dd class="text-base text-gray-900 font-mono">{{ user.matricule }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Rôle</dt>
+              <dd>
+                <mat-chip class="!bg-blue-50 !text-blue-700">
+                  {{ user.role | roleLabel }}
+                </mat-chip>
+              </dd>
+            </div>
+            @if (user.siteRattachementId !== null) {
+              <div>
+                <dt class="text-xs text-gray-500 uppercase tracking-wide">Site de rattachement</dt>
+                <dd class="text-base text-gray-900">{{ user.siteRattachementNom }}</dd>
+              </div>
+            }
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Inscrit le</dt>
+              <dd class="text-base text-gray-900">
+                {{ user.dateInscription | date:'dd MMMM yyyy':'':'fr-BE' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-gray-500 uppercase tracking-wide">Statut</dt>
+              <dd>
+                @if (user.active) {
+                  <span class="inline-flex items-center gap-1 text-sm text-green-700">
+                    <mat-icon class="!text-base !w-4 !h-4">check_circle</mat-icon>
+                    Compte actif
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 text-sm text-red-600">
+                    <mat-icon class="!text-base !w-4 !h-4">block</mat-icon>
+                    Compte désactivé
+                  </span>
+                }
+              </dd>
+            </div>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Section solde (uniquement pour les membres, pas les admins) -->
+    @if (user.role !== 'ADMIN_GLOBAL' && user.role !== 'ADMIN_SITE') {
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title class="!flex !items-center !gap-2 !text-lg">
+            <mat-icon class="text-blue-600">account_balance_wallet</mat-icon>
+            Solde de compte
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="!flex !items-center !justify-between !flex-wrap !gap-2">
+          <app-solde-badge></app-solde-badge>
+          <a mat-stroked-button color="primary" routerLink="/transactions">
+            <mat-icon>receipt_long</mat-icon>
+            Voir mes transactions
+          </a>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+} @else {
+  <div class="flex items-center justify-center p-8">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+}
