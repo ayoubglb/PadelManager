@@ -15,9 +15,9 @@ export interface RegisterRequest {
   prenom: string;
   email: string;
   telephone: string;
-  password: string;
+  motDePasse: string;
   role: 'MEMBRE_LIBRE' | 'MEMBRE_SITE' | 'MEMBRE_GLOBAL';
-  siteRattachementId?: number;
+  siteRattachementId?: number; // requis uniquement si role -> MEMBRE_SITE
 }
 
 // Réponse du backend après login/register
