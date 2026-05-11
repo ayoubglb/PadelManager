@@ -41,8 +41,7 @@ export class Profil {
 
   readonly profil = this.authService.profil;
 
-  // Pénalité active, chargée à l'init
-  // Si null, le bloc pénalité est caché
+  // Pénalité active, chargée à l'init Si null, le bloc pénalité est caché
 
   readonly penaliteActive = toSignal(this.penaliteService.getActive(), {
     initialValue: null,
