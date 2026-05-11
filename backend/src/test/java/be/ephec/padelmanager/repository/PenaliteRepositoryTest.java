@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -163,5 +164,35 @@ class PenaliteRepositoryTest {
                         org.springframework.dao.DataIntegrityViolationException.class,
                         jakarta.persistence.PersistenceException.class)
                 .hasMessageContaining("uk_penalite_match");
+    }
+
+    @Test
+    @DisplayName("findAllByUtilisateurIdOrderByDateDebutDesc retourne toutes les pénalités triées DESC")
+    void trouveToutesLesPenalitesTrieesParDateDebutDesc() {
+        LocalDateTime maintenant = LocalDateTime.now();
+
+        // Pénalité passée (il y a 2 mois)
+        em.persistAndFlush(Penalite.builder()
+                .utilisateur(utilisateur)
+                .dateDebut(maintenant.minusMonths(2))
+                .dateFin(maintenant.minusMonths(2).plusWeeks(1))
+                .motif("ANCIENNE_PENALITE")
+                .build());
+
+        // Pénalité active (commencée hier)
+        em.persistAndFlush(Penalite.builder()
+                .utilisateur(utilisateur)
+                .dateDebut(maintenant.minusDays(1))
+                .dateFin(maintenant.plusDays(6))
+                .motif("CONVERSION_AUTO_PRIVE_PUBLIC")
+                .build());
+
+        List<Penalite> toutes = penaliteRepository
+                .findAllByUtilisateurIdOrderByDateDebutDesc(utilisateur.getId());
+
+        assertThat(toutes).hasSize(2);
+        // Tri DESC : la plus récente en premier
+        assertThat(toutes.get(0).getMotif()).isEqualTo("CONVERSION_AUTO_PRIVE_PUBLIC");
+        assertThat(toutes.get(1).getMotif()).isEqualTo("ANCIENNE_PENALITE");
     }
 }

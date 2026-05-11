@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 // Tests unitaires Mockito de TransactionService pour la recharge
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TransactionService — recharge compte (EF-MB-009)")
+@DisplayName("TransactionService — recharge compte")
 class TransactionServiceTest {
 
     @Mock private TransactionRepository transactionRepository;

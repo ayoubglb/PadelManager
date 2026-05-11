@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PenaliteRepository extends JpaRepository<Penalite, Long> {
@@ -19,4 +20,13 @@ public interface PenaliteRepository extends JpaRepository<Penalite, Long> {
         """)
     Optional<Penalite> findActiveByUtilisateurId(@Param("utilisateurId") Long utilisateurId,
                                                  @Param("maintenant") LocalDateTime maintenant);
+
+    // Récupère toutes les pénalités d'un utilisateur, triées par date de début décroissante. */
+    @Query("""
+        SELECT p FROM Penalite p
+        WHERE p.utilisateur.id = :utilisateurId
+        ORDER BY p.dateDebut DESC
+        """)
+    List<Penalite> findAllByUtilisateurIdOrderByDateDebutDesc(@Param("utilisateurId") Long utilisateurId);
+
 }
