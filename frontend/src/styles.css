@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "./app/**/*.{html,ts}";
+
 
 /* Palette sobre */
 @theme {
