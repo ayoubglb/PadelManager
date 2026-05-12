@@ -1,0 +1,61 @@
+<div class="flex flex-col gap-4 max-w-6xl mx-auto">
+
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Nos sites</h1>
+    <p class="text-sm text-gray-500">
+      Découvrez les clubs de padel accessibles via l'application
+    </p>
+  </div>
+
+  @if (sites() === null) {
+    <div class="flex items-center justify-center p-8">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (sites()!.length === 0) {
+    <mat-card>
+      <mat-card-content class="text-center py-8 text-gray-500">
+        <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">
+          location_off
+        </mat-icon>
+        <p>Aucun site disponible pour le moment.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (site of sites(); track site.id) {
+        <mat-card class="hover:shadow-md transition-shadow">
+          <mat-card-header>
+            <mat-card-title class="!flex !items-center !gap-2 !text-lg">
+              <mat-icon class="text-blue-600">apartment</mat-icon>
+              {{ site.nom }}
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content class="!pt-2">
+            <div class="flex items-start gap-2 text-sm text-gray-700">
+              <mat-icon class="!text-base !w-4 !h-4 text-gray-400 mt-0.5">
+                place
+              </mat-icon>
+              <div>
+                <div>{{ site.adresse }}</div>
+                <div>{{ site.codePostal }} {{ site.ville }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions align="end">
+            <a
+            mat-stroked-button
+            color="primary"
+            [routerLink]="['/planning']"
+            [queryParams]="{ siteId: site.id }"
+            >
+            <mat-icon>calendar_month</mat-icon>
+            Voir le planning
+            </a>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</div>
