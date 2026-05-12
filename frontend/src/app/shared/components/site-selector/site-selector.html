@@ -1,0 +1,16 @@
+<mat-form-field appearance="outline" class="w-full">
+  <mat-label>{{ label() }}</mat-label>
+  <mat-select [value]="selectedSiteId()" (valueChange)="onChange($event)">
+    @if (allowEmpty()) {
+      <mat-option [value]="null">Tous les sites</mat-option>
+    }
+    @for (site of sites(); track site.id) {
+      <mat-option [value]="site.id">
+        {{ site.nom }}
+        @if (!site.active) {
+          <span class="text-xs text-gray-400">(désactivé)</span>
+        }
+      </mat-option>
+    }
+  </mat-select>
+</mat-form-field>

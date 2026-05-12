@@ -52,6 +52,11 @@ export const routes: Routes = [
           import('./features/profil/profil').then((m) => m.Profil),
       },
       {
+        path: 'sites',
+        loadComponent: () =>
+          import('./features/sites/sites').then((m) => m.Sites),
+      },
+      {
         path: 'admin',
         loadChildren: () =>
           import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),

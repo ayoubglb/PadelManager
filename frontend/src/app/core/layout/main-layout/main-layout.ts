@@ -28,6 +28,8 @@ const NAV_ITEMS: NavItem[] = [
   // Membres + admins
   { label: 'Planning', icon: 'calendar_month', route: '/planning',
     roles: ['MEMBRE_GLOBAL', 'MEMBRE_SITE', 'MEMBRE_LIBRE', 'ADMIN_GLOBAL', 'ADMIN_SITE'] },
+  { label: 'Nos sites', icon: 'apartment', route: '/sites',
+    roles: ['MEMBRE_GLOBAL', 'MEMBRE_SITE', 'MEMBRE_LIBRE', 'ADMIN_GLOBAL', 'ADMIN_SITE'] },
   { label: 'Matchs publics', icon: 'groups', route: '/matchs/publics',
     roles: ['MEMBRE_GLOBAL', 'MEMBRE_SITE', 'MEMBRE_LIBRE'] },
   { label: 'Mes matchs', icon: 'sports_tennis', route: '/matchs/mes-matchs',
