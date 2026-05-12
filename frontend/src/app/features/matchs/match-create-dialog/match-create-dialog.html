@@ -1,0 +1,96 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">sports_tennis</mat-icon>
+  Nouvelle réservation
+</h2>
+
+<mat-dialog-content>
+  <!-- Récap du créneau choisi -->
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+    <div class="flex items-center gap-2 text-sm mb-1">
+      <mat-icon class="!text-base !w-4 !h-4 text-blue-600">apartment</mat-icon>
+      <span class="font-semibold">{{ data.siteNom }}</span>
+      <span class="text-gray-500">·</span>
+      <span>Terrain {{ data.terrainNumero }}</span>
+    </div>
+    <div class="flex items-center gap-2 text-sm">
+      <mat-icon class="!text-base !w-4 !h-4 text-blue-600">schedule</mat-icon>
+      <span>{{ dateFormatted() | date:'EEEE dd MMMM yyyy':'':'fr-BE' }}</span>
+      <span class="text-gray-500">·</span>
+      <span class="font-semibold">
+        {{ formatTime(data.creneauDebut) }} – {{ formatTime(data.creneauFin) }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Choix du type de match -->
+  <form [formGroup]="form" class="flex flex-col gap-3">
+    <div class="text-sm font-semibold text-gray-700">Type de match</div>
+    <mat-radio-group formControlName="type" class="flex flex-col gap-2">
+      <mat-radio-button value="PRIVE" class="!flex !items-start !p-2 !border !border-gray-200 !rounded-lg">
+        <div class="ml-1">
+          <div class="font-medium">Privé</div>
+          <div class="text-xs text-gray-600">
+            Vous ajoutez vous-même les 3 autres joueurs. Si moins de 4 joueurs
+            24h avant le match, conversion automatique en public avec pénalité.
+          </div>
+        </div>
+      </mat-radio-button>
+      <mat-radio-button value="PUBLIC" class="!flex !items-start !p-2 !border !border-gray-200 !rounded-lg">
+        <div class="ml-1">
+          <div class="font-medium">Public</div>
+          <div class="text-xs text-gray-600">
+            N'importe quel membre peut rejoindre (premier payé, premier servi).
+            Si incomplet 24h avant, vous payez la différence.
+          </div>
+        </div>
+      </mat-radio-button>
+    </mat-radio-group>
+  </form>
+
+  <!-- Prix et solde -->
+  <div class="mt-4 p-3 rounded-lg"
+       [class.bg-green-50]="soldeOk()"
+       [class.border-green-200]="soldeOk()"
+       [class.bg-red-50]="!soldeOk()"
+       [class.border-red-200]="!soldeOk()"
+       [class.border]="true">
+    <div class="flex items-center justify-between text-sm">
+      <span class="text-gray-700">Votre part (organisateur)</span>
+      <span class="font-semibold">{{ prixOrganisateur | currency:'EUR':'symbol':'1.2-2':'fr-BE' }}</span>
+    </div>
+    <div class="flex items-center justify-between text-sm mt-1">
+      <span class="text-gray-700">Votre solde actuel</span>
+      <span class="font-semibold">
+        @if (solde() !== null) {
+          {{ solde() | currency:'EUR':'symbol':'1.2-2':'fr-BE' }}
+        } @else {
+          —
+        }
+      </span>
+    </div>
+    @if (!soldeOk()) {
+      <div class="flex items-start gap-2 mt-2 text-xs text-red-700">
+        <mat-icon class="!text-base !w-4 !h-4">warning</mat-icon>
+        <span>
+          Solde insuffisant. Rechargez votre compte avant de réserver.
+        </span>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="loading()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="form.invalid || loading() || !soldeOk()"
+  >
+    @if (loading()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Confirmer ({{ prixOrganisateur }} €)
+    }
+  </button>
+</mat-dialog-actions>

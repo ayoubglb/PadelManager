@@ -13,6 +13,7 @@
           matInput
           [matDatepicker]="datePicker"
           [value]="selectedDate()"
+          [min]="minDate"
           (dateChange)="onDateChange($event.value)"
           readonly
         />
@@ -21,7 +22,8 @@
       </mat-form-field>
 
       <div class="flex gap-2">
-        <button mat-stroked-button (click)="previousDay()" matTooltip="Jour précédent">
+        <button mat-stroked-button (click)="previousDay()" matTooltip="Jour précédent"
+                [disabled]="!canGoBack()">
           <mat-icon>chevron_left</mat-icon>
         </button>
         <button mat-stroked-button (click)="today()">Aujourd'hui</button>
@@ -91,7 +93,7 @@
                         class="border border-gray-200 px-2 py-2 text-center text-xs transition-colors"
                         [class]="cellClass(cell)"
                         [matTooltip]="cellTooltip(cell)"
-                        (click)="isCellClickable(cell) && onCellClick(cell, creneau.debut)"
+                        (click)="isCellClickable(cell) && onCellClick(cell, creneau)"
                       >
                         {{ cellLabel(cell) }}
                       </td>
