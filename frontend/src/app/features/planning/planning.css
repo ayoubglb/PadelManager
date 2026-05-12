@@ -1,0 +1,8 @@
+:host {
+  display: block;
+}
+
+table td {
+  user-select: none;
+  min-width: 80px;
+}

@@ -23,9 +23,7 @@ export const routes: Routes = [
       {
         path: 'planning',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
-          ),
+          import('./features/planning/planning').then((m) => m.Planning),
       },
       {
         path: 'matchs/publics',
