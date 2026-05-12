@@ -24,6 +24,8 @@ import { PlanningService } from '../../core/api/planning.service';
 import { PlanningView, CelluleView } from '../../core/api/planning.types';
 import { SiteSelector } from '../../shared/components/site-selector/site-selector';
 import { CreneauView } from '../../core/api/planning.types';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../core/api/auth.types';
 
 @Component({
   selector: 'app-planning',
@@ -51,12 +53,27 @@ export class Planning {
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
+  /// Date minimum sélectionnable dans le datepicker = aujourd'hui.
+  /// Empêche la sélection de dates passées (qui seraient refusées par le backend).
+  readonly minDate = new Date();
+
   readonly selectedSiteId = signal<number | null>(this.getInitialSiteId());
   readonly selectedDate = signal<Date>(new Date());
   readonly loading = signal(false);
 
-  // Planning chargé depuis le backend selon (siteId, date)
+  /**
+   * Indique si on peut reculer d'un jour (faux si on est déjà sur aujourd'hui ou avant).
+   * Utilisé pour désactiver le bouton "Jour précédent".
+   */
+  readonly canGoBack = computed(() => {
+    const selected = new Date(this.selectedDate());
+    selected.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected.getTime() > today.getTime();
+  });
 
+  // Planning chargé depuis le backend selon (siteId, date)
   readonly planning = toSignal<PlanningView | null>(
     combineLatest([
       toObservable(this.selectedSiteId),
@@ -67,12 +84,12 @@ export class Planning {
         this.loading.set(true);
         return this.planningService.getPlanning(siteId, this.toIsoDate(date)).pipe(
           tap(() => this.loading.set(false)),
-          catchError((err) => {
+          catchError((err: HttpErrorResponse) => {
             this.loading.set(false);
             console.error('Erreur chargement planning', err);
-            this.snack.open('Impossible de charger le planning', 'OK', {
-              duration: 4000,
-            });
+            const apiErr = err.error as ApiError | undefined;
+            const msg = apiErr?.message ?? 'Impossible de charger le planning';
+            this.snack.open(msg, 'OK', { duration: 4000 });
             return of(null);
           })
         );
@@ -211,14 +228,12 @@ export class Planning {
 
     ref.afterClosed().subscribe((result: MatchCreateDialogResult | undefined) => {
       if (!result) return;
-      // Match créé avec succès
       if (result.type === 'PRIVE') {
         this.snack.open(
           `Match privé #${result.matchId} créé. Invitez vos joueurs.`,
           'OK',
           { duration: 4000 }
         );
-        // TODO : naviguer vers /matchs/:id/inviter quand la feature sera prête
       } else {
         this.snack.open(
           `Match public #${result.matchId} créé. Visible dans le catalogue.`,
@@ -226,16 +241,12 @@ export class Planning {
           { duration: 4000 }
         );
       }
-      // Rafraîchir le planning pour voir le nouveau match
       this.refreshPlanning();
     });
   }
 
-  // Force le rechargement du planning courant après une modification (ex : création de match).
-
   private refreshPlanning(): void {
     const currentDate = this.selectedDate();
-    // Astuce : on re-set la date pour forcer combineLatest à re-déclencher l'appel
     this.selectedDate.set(new Date(currentDate));
   }
 
