@@ -40,4 +40,6 @@ export interface ApiError {
     | 'NOT_FOUND'
     | 'INTERNAL_ERROR';
   message: string;
+  details?: string[];   // détails optionnels (validation, etc.)
+  timestamp?: string;   // ISO 8601, ajouté par le backend
 }
