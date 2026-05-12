@@ -11,12 +11,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  MatchCreateDialog,
+  MatchCreateDialogData,
+  MatchCreateDialogResult,
+} from '../matchs/match-create-dialog/match-create-dialog';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { combineLatest, switchMap, of, catchError, tap } from 'rxjs';
 
 import { PlanningService } from '../../core/api/planning.service';
 import { PlanningView, CelluleView } from '../../core/api/planning.types';
 import { SiteSelector } from '../../shared/components/site-selector/site-selector';
+import { CreneauView } from '../../core/api/planning.types';
 
 @Component({
   selector: 'app-planning',
@@ -42,6 +49,7 @@ export class Planning {
   private snack = inject(MatSnackBar);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   readonly selectedSiteId = signal<number | null>(this.getInitialSiteId());
   readonly selectedDate = signal<Date>(new Date());
@@ -165,13 +173,9 @@ export class Planning {
     return 'Créneau indisponible';
   }
 
-  onCellClick(c: CelluleView, creneauDebut: string): void {
+  onCellClick(c: CelluleView, creneau: CreneauView): void {
     if (c.statut === 'LIBRE') {
-      this.snack.open(
-        `Réserver à ${this.formatTime(creneauDebut)} - À implémenter`,
-        'OK',
-        { duration: 2500 }
-      );
+      this.openCreateMatchDialog(c, creneau);
       return;
     }
     if (c.statut === 'PUBLIC_DISPO' && c.matchId) {
@@ -182,6 +186,57 @@ export class Planning {
       );
       return;
     }
+  }
+
+  private openCreateMatchDialog(c: CelluleView, creneau: CreneauView): void {
+    const planning = this.planning();
+    if (!planning) return;
+
+    const terrain = planning.terrains.find((t) => t.id === c.terrainId);
+    if (!terrain) return;
+
+    const data: MatchCreateDialogData = {
+      siteNom: planning.siteNom,
+      terrainId: terrain.id,
+      terrainNumero: terrain.numero,
+      date: planning.date,
+      creneauDebut: creneau.debut,
+      creneauFin: creneau.fin,
+    };
+
+    const ref = this.dialog.open(MatchCreateDialog, {
+      width: '500px',
+      data,
+    });
+
+    ref.afterClosed().subscribe((result: MatchCreateDialogResult | undefined) => {
+      if (!result) return;
+      // Match créé avec succès
+      if (result.type === 'PRIVE') {
+        this.snack.open(
+          `Match privé #${result.matchId} créé. Invitez vos joueurs.`,
+          'OK',
+          { duration: 4000 }
+        );
+        // TODO : naviguer vers /matchs/:id/inviter quand la feature sera prête
+      } else {
+        this.snack.open(
+          `Match public #${result.matchId} créé. Visible dans le catalogue.`,
+          'OK',
+          { duration: 4000 }
+        );
+      }
+      // Rafraîchir le planning pour voir le nouveau match
+      this.refreshPlanning();
+    });
+  }
+
+  // Force le rechargement du planning courant après une modification (ex : création de match).
+
+  private refreshPlanning(): void {
+    const currentDate = this.selectedDate();
+    // Astuce : on re-set la date pour forcer combineLatest à re-déclencher l'appel
+    this.selectedDate.set(new Date(currentDate));
   }
 
   isCellClickable(c: CelluleView): boolean {
