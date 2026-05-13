@@ -40,6 +40,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'matchs/:id',
+        loadComponent: () =>
+          import('./shared/components/placeholder/placeholder').then(
+            (m) => m.Placeholder
+          ),
+      },
+      {
         path: 'transactions',
         loadComponent: () =>
           import('./features/transactions/transactions').then((m) => m.Transactions),
