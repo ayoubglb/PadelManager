@@ -1,0 +1,57 @@
+<mat-card class="hover:shadow-md transition-shadow">
+  <mat-card-content class="!p-4">
+    <!-- Ligne 1 : Date + chips type/rôle -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <div class="flex items-center gap-2">
+        <mat-icon class="!text-base !w-4 !h-4 text-blue-600">event</mat-icon>
+        <span class="font-semibold text-gray-800">
+          {{ dateObj() | date:'EEEE dd MMMM yyyy':'':'fr-BE' }}
+        </span>
+        <span class="text-sm text-gray-500">·</span>
+        <span class="text-sm text-gray-700">
+          {{ formatTime(dateObj()) }} – {{ formatTime(endDateObj()) }}
+        </span>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <mat-chip [class]="typeChipClass()">
+          {{ match().type === 'PRIVE' ? 'Privé' : 'Public' }}
+        </mat-chip>
+        <mat-chip [class]="roleChipClass()">
+          {{ roleLabel() }}
+        </mat-chip>
+      </div>
+    </div>
+
+    <!-- Ligne 2 : Lieu -->
+    <div class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+      <mat-icon class="!text-base !w-4 !h-4 text-gray-400">apartment</mat-icon>
+      <span class="font-medium">{{ match().siteNom }}</span>
+      <span class="text-gray-500">·</span>
+      <span>Terrain {{ match().terrainNumero }}</span>
+    </div>
+
+    <!-- Ligne 3 : Organisateur + joueurs -->
+    <div class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+      <mat-icon class="!text-base !w-4 !h-4 text-gray-400">person</mat-icon>
+      <span>Organisé par <span class="font-medium">{{ match().organisateurNom }}</span></span>
+      <span class="text-gray-500">·</span>
+      <span>{{ match().nombreInscrits }}/4 joueur{{ match().nombreInscrits > 1 ? 's' : '' }}</span>
+    </div>
+
+    <!-- Ligne 4 : Statut paiement perso -->
+    <div class="flex items-center gap-2 text-sm" [class]="paymentStatusClass()">
+      <mat-icon class="!text-base !w-4 !h-4">{{ paymentStatusIcon() }}</mat-icon>
+      <span>{{ paymentStatusLabel() }}</span>
+    </div>
+  </mat-card-content>
+
+  @if (showDetailButton()) {
+    <mat-card-actions align="end" class="!pt-0">
+      <button mat-stroked-button color="primary" (click)="onDetailClick()">
+        <mat-icon>visibility</mat-icon>
+        Voir le détail
+      </button>
+    </mat-card-actions>
+  }
+</mat-card>

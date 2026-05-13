@@ -35,8 +35,8 @@ export const routes: Routes = [
       {
         path: 'matchs/mes-matchs',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
+          import('./features/matchs/mes-matchs/mes-matchs').then(
+            (m) => m.MesMatchs
           ),
       },
       {
