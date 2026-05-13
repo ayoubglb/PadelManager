@@ -5,6 +5,7 @@ import be.ephec.padelmanager.dto.inscription.InscriptionMatchDTO;
 import be.ephec.padelmanager.dto.inscription.RejoindreMatchResponse;
 import be.ephec.padelmanager.dto.match.*;
 import be.ephec.padelmanager.dto.transaction.TransactionDTO;
+import be.ephec.padelmanager.dto.match.MatchDetailDTO;
 import be.ephec.padelmanager.entity.*;
 import be.ephec.padelmanager.mapper.InscriptionMatchMapper;
 import be.ephec.padelmanager.mapper.MatchMapper;
@@ -628,5 +629,73 @@ public class MatchService {
                     );
                 })
                 .toList();
+    }
+
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Consulte le détail d'un match
+     // - Match PUBLIC : visible par tout utilisateur authentifié
+     // - Match PRIVE : visible par l'organisateur, les invités inscrits, et les admins
+    @Transactional(readOnly = true)
+    public MatchDetailDTO consulterDetailMatch(Long matchId, Utilisateur utilisateur) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Match introuvable : " + matchId));
+
+        // Contrôle d'accès pour les matchs PRIVE
+        if (match.getType() == TypeMatch.PRIVE) {
+            verifierAccesMatchPrive(match, utilisateur);
+        }
+
+        List<InscriptionMatch> inscriptions = inscriptionMatchRepository
+                .findByMatchId(match.getId());
+
+        int joueursPayes = (int) inscriptions.stream()
+                .filter(i -> Boolean.TRUE.equals(i.getPaye()))
+                .filter(i -> i.getStatut() == StatutInscription.INSCRIT)
+                .count();
+
+        return new MatchDetailDTO(
+                match.getId(),
+                match.getTerrain().getId(),
+                match.getTerrain().getNumero(),
+                match.getTerrain().getSite().getId(),
+                match.getTerrain().getSite().getNom(),
+                match.getDateHeureDebut(),
+                match.getDateHeureFin(),
+                match.getOrganisateur().getId(),
+                match.getOrganisateur().getPrenom() + " " + match.getOrganisateur().getNom(),
+                match.getOrganisateur().getMatricule(),
+                match.getType(),
+                match.getStatut(),
+                match.getDevenuPublicAutomatiquement(),
+                match.getDateCreation(),
+                match.getDateHeureFin().isBefore(LocalDateTime.now(clock)),
+                inscriptions.stream().map(inscriptionMatchMapper::toDto).toList(),
+                joueursPayes,
+                4 - joueursPayes
+        );
+    }
+
+    // Vérifie qu'un utilisateur a le droit de voir le détail d'un match PRIVE.
+    //  Autorisés : organisateur, joueurs inscrits, admins
+    private void verifierAccesMatchPrive(Match match, Utilisateur utilisateur) {
+        // Admin global/site → accès total
+        if (utilisateur.getRole() == RoleUtilisateur.ADMIN_GLOBAL
+                || utilisateur.getRole() == RoleUtilisateur.ADMIN_SITE) {
+            return;
+        }
+        // Organisateur → OK
+        if (match.getOrganisateur().getId().equals(utilisateur.getId())) {
+            return;
+        }
+        // Joueur inscrit (invité) → OK
+        boolean estInscrit = inscriptionMatchRepository
+                .existsByMatchIdAndJoueurId(match.getId(), utilisateur.getId());
+        if (estInscrit) {
+            return;
+        }
+        throw new AccessDeniedException(
+                "Vous n'avez pas accès au détail de ce match privé");
     }
 }

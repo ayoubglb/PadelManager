@@ -35,3 +35,49 @@ export interface MatchCreateRequest {
   dateHeureDebut: string;
   type: TypeMatch;
 }
+
+
+// Statut d'une inscription joueur dans un match
+
+export type StatutInscription = 'INSCRIT' | 'ANNULE' | 'LIBERE_NON_PAIEMENT';
+
+// Rôle de l'utilisateur courant dans un match.
+
+export type MonRoleDansMatch = 'ORGANISATEUR' | 'JOUEUR';
+
+// Inscription d'un joueur à un match
+export interface InscriptionMatch {
+  id: number;
+  matchId: number;
+  joueurId: number;
+  joueurMatricule: string;
+  joueurNom: string;
+  dateInscription: string; // ISO LocalDateTime
+  paye: boolean;
+  statut: StatutInscription;
+  estOrganisateur: boolean;
+}
+
+// DTO synthétique retourné par GET /matchs/mes-matchs. Allégé pour les vues catalogue (pas de liste d'inscriptions)
+export interface MesMatch {
+  id: number;
+  siteNom: string;
+  terrainNumero: number;
+  dateHeureDebut: string;
+  dateHeureFin: string;
+  type: TypeMatch;
+  statut: StatutMatch;
+  organisateurNom: string;
+  monRole: MonRoleDansMatch;
+  maPartPayee: boolean;
+  nombreInscrits: number;
+}
+
+// DTO complet retourné par GET /matchs/{id} avec la liste des inscriptions. Utilisé pour la page détail.
+
+export interface MatchDetail extends Match {
+  organisateurMatricule: string;
+  inscriptions: InscriptionMatch[];
+  nombreJoueursPayes: number;
+  placesDisponibles: number;
+}

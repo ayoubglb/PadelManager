@@ -1,0 +1,86 @@
+<div class="flex flex-col gap-4 max-w-5xl mx-auto">
+
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Mes matchs</h1>
+    <p class="text-sm text-gray-500">
+      Vos réservations et l'historique de vos matchs joués
+    </p>
+  </div>
+
+  <mat-tab-group dynamicHeight>
+    <!-- Onglet À venir -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">event_upcoming</mat-icon>
+        À venir
+        @if (nbAVenir() > 0) {
+          <span class="ml-2 bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            {{ nbAVenir() }}
+          </span>
+        }
+      </ng-template>
+
+      <div class="pt-4">
+        @if (matchsAVenir() === null) {
+          <div class="flex items-center justify-center p-8">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+        } @else if (matchsAVenir()!.length === 0) {
+          <mat-card>
+            <mat-card-content class="text-center py-8 text-gray-500">
+              <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">
+                event_busy
+              </mat-icon>
+              <p>Vous n'avez aucun match à venir.</p>
+              <p class="text-sm mt-1">
+                Rendez-vous sur le planning pour en créer un.
+              </p>
+            </mat-card-content>
+          </mat-card>
+        } @else {
+          <div class="flex flex-col gap-3">
+            @for (m of matchsAVenir(); track m.id) {
+              <app-match-card [match]="m" (detailClick)="onDetailClick($event)" />
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Onglet Historique -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">history</mat-icon>
+        Historique
+        @if (nbHistorique() > 0) {
+          <span class="ml-2 bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            {{ nbHistorique() }}
+          </span>
+        }
+      </ng-template>
+
+      <div class="pt-4">
+        @if (matchsHistorique() === null) {
+          <div class="flex items-center justify-center p-8">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+        } @else if (matchsHistorique()!.length === 0) {
+          <mat-card>
+            <mat-card-content class="text-center py-8 text-gray-500">
+              <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">
+                history
+              </mat-icon>
+              <p>Aucun match passé pour l'instant.</p>
+            </mat-card-content>
+          </mat-card>
+        } @else {
+          <div class="flex flex-col gap-3">
+            @for (m of matchsHistorique(); track m.id) {
+              <app-match-card [match]="m" (detailClick)="onDetailClick($event)" />
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

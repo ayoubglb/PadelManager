@@ -112,4 +112,15 @@ public class MatchController {
         return ResponseEntity.ok(matchs);
     }
 
+    // Consulte le détail d'un match
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MatchDetailDTO> consulterDetailMatch(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UtilisateurPrincipal principal
+    ) {
+        MatchDetailDTO detail = matchService.consulterDetailMatch(id, principal.getUtilisateur());
+        return ResponseEntity.ok(detail);
+    }
+
 }
