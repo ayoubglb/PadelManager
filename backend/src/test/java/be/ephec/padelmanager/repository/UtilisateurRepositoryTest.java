@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -149,6 +151,80 @@ class UtilisateurRepositoryTest {
 
         assertThat(trouve.getSiteRattachement()).isNull();
         assertThat(trouve.getMatricule()).isEqualTo("L600099");
+    }
+
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("rechercherPourInvitation trouve les users par nom (insensible à la casse)")
+    void rechercheParNom() {
+        // Crée 2 utilisateurs de test
+        em.persistAndFlush(Utilisateur.builder()
+                .matricule("L800001")
+                .email("jean.dupont@test.be")
+                .telephone("0000000001")
+                .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
+                .nom("Dupont").prenom("Jean")
+                .role(RoleUtilisateur.MEMBRE_LIBRE)
+                .active(true)
+                .build());
+
+        em.persistAndFlush(Utilisateur.builder()
+                .matricule("L800002")
+                .email("marie.dupond@test.be")
+                .telephone("0000000002")
+                .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
+                .nom("Dupond").prenom("Marie")
+                .role(RoleUtilisateur.MEMBRE_LIBRE)
+                .active(true)
+                .build());
+
+        List<Utilisateur> resultats = utilisateurRepository
+                .rechercherPourInvitation("dup", PageRequest.of(0, 10));
+
+        assertThat(resultats).extracting(Utilisateur::getMatricule)
+                .contains("L800001", "L800002");
+    }
+
+    @Test
+    @DisplayName("rechercherPourInvitation exclut les admins")
+    void rechercheExcluAdmins() {
+        em.persistAndFlush(Utilisateur.builder()
+                .matricule("AG999001")
+                .email("admin.test@test.be")
+                .telephone("0000000003")
+                .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
+                .nom("AdminTest").prenom("Test")
+                .role(RoleUtilisateur.ADMIN_GLOBAL)
+                .active(true)
+                .build());
+
+        List<Utilisateur> resultats = utilisateurRepository
+                .rechercherPourInvitation("AdminTest", PageRequest.of(0, 10));
+
+        assertThat(resultats).isEmpty();
+    }
+
+    @Test
+    @DisplayName("rechercherPourInvitation exclut les comptes inactifs")
+    void rechercheExclutInactifs() {
+        em.persistAndFlush(Utilisateur.builder()
+                .matricule("L800099")
+                .email("inactif@test.be")
+                .telephone("0000000099")
+                .passwordHash("$2a$12$dummy.hash.for.testing.purposes.only.0123456")
+                .nom("Inactif").prenom("Test")
+                .role(RoleUtilisateur.MEMBRE_LIBRE)
+                .active(false)
+                .build());
+
+        List<Utilisateur> resultats = utilisateurRepository
+                .rechercherPourInvitation("Inactif", PageRequest.of(0, 10));
+
+        assertThat(resultats).isEmpty();
     }
 
 
