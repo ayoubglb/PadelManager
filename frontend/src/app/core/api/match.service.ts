@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import {
+  AnnulationMatchResponse,
+  InviterJoueurRequest,
   Match,
   MatchCreateRequest,
   MatchDetail,
@@ -15,19 +17,12 @@ export class MatchService {
   private http = inject(HttpClient);
   private transactionService = inject(TransactionService);
 
-  // Crée un nouveau match (privé ou public)
-  // L'organisateur est facturé 15€ immédiatement (transaction PAIEMENT_MATCH)
-  // Le solde est rafraîchi automatiquement après succès
   create(req: MatchCreateRequest): Observable<Match> {
     return this.http.post<Match>(`${API_BASE_URL}/matchs`, req).pipe(
-      tap(() => {
-        this.transactionService.refreshSolde().subscribe();
-      })
+      tap(() => this.transactionService.refreshSolde().subscribe())
     );
   }
 
-  // Récupère les matchs de l'utilisateur connecté
-  // @param aVenir true = matchs à venir, false = historique
   getMesMatchs(aVenir: boolean): Observable<MesMatch[]> {
     const params = new HttpParams().set('aVenir', aVenir);
     return this.http.get<MesMatch[]>(`${API_BASE_URL}/matchs/mes-matchs`, {
@@ -35,13 +30,47 @@ export class MatchService {
     });
   }
 
-  // Détails complets d'un match avec sa liste d'inscriptions
-  // - Match PUBLIC : tout authentifié
-  //  - Match PRIVE : organisateur + joueurs inscrits + admins
-
   getById(id: number): Observable<MatchDetail> {
     return this.http.get<MatchDetail>(`${API_BASE_URL}/matchs/${id}`);
   }
 
-  // Les méthodes payer, rejoindre, annuler, inviter, publics seront ajoutées
+  // Paie sa part d'un match auquel on a été invité (15€)
+  // Le solde est rafraîchi automatiquement après succès
+  payer(matchId: number): Observable<void> {
+    return this.http
+      .post<void>(`${API_BASE_URL}/matchs/${matchId}/payer`, {})
+      .pipe(tap(() => this.transactionService.refreshSolde().subscribe()));
+  }
+
+  // Rejoint un match public (paie 15€ immédiatement)
+  // Premier payé = premier servi (race condition gérée côté backend)
+
+  rejoindre(matchId: number): Observable<void> {
+    return this.http
+      .post<void>(`${API_BASE_URL}/matchs/${matchId}/rejoindre`, {})
+      .pipe(tap(() => this.transactionService.refreshSolde().subscribe()));
+  }
+
+  // Invite un joueur dans un match privé via son matricule
+  // Réservé à l'organisateur d'un match PRIVE
+
+  inviter(matchId: number, req: InviterJoueurRequest): Observable<void> {
+    return this.http.post<void>(
+      `${API_BASE_URL}/matchs/${matchId}/joueurs`,
+      req
+    );
+  }
+
+   // Annule un match. Réservé à l'organisateur
+   // Tous les joueurs ayant payé sont remboursés (transactions REMBOURSEMENT créées)
+   // Le solde est rafraîchi automatiquement après succès
+
+  annuler(matchId: number): Observable<AnnulationMatchResponse> {
+    return this.http
+      .post<AnnulationMatchResponse>(
+        `${API_BASE_URL}/matchs/${matchId}/annuler`,
+        {}
+      )
+      .pipe(tap(() => this.transactionService.refreshSolde().subscribe()));
+  }
 }

@@ -42,8 +42,8 @@ export const routes: Routes = [
       {
         path: 'matchs/:id',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
+          import('./features/matchs/match-detail/match-detail').then(
+            (m) => m.MatchDetailPage
           ),
       },
       {
