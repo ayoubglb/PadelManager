@@ -1,0 +1,187 @@
+@if (match() === null && !loading()) {
+  <div class="flex items-center justify-center p-8">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+} @else if (match(); as m) {
+  <div class="flex flex-col gap-4 max-w-4xl mx-auto">
+
+    <!-- Header avec retour -->
+    <div class="flex items-center gap-2">
+      <button mat-icon-button (click)="retour()" matTooltip="Retour à Mes matchs">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1 class="text-2xl font-bold text-gray-800">Match #{{ m.id }}</h1>
+    </div>
+
+    <!-- Statut bandeau (si annulé ou terminé) -->
+    @if (m.statut === 'ANNULE') {
+      <mat-card class="!bg-gray-100 !border-l-4 !border-gray-400">
+        <mat-card-content class="!flex !items-center !gap-2 !p-3">
+          <mat-icon class="!text-gray-500">block</mat-icon>
+          <span class="font-medium text-gray-700">Ce match a été annulé.</span>
+        </mat-card-content>
+      </mat-card>
+    } @else if (m.termine) {
+      <mat-card class="!bg-blue-50 !border-l-4 !border-blue-400">
+        <mat-card-content class="!flex !items-center !gap-2 !p-3">
+          <mat-icon class="!text-blue-600">check_circle</mat-icon>
+          <span class="font-medium text-blue-800">Ce match est terminé.</span>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Carte infos -->
+    <mat-card>
+      <mat-card-content class="!p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-lg font-semibold text-gray-800">Informations</h2>
+          <mat-chip [class.!bg-red-50]="m.type === 'PRIVE'"
+                    [class.!text-red-700]="m.type === 'PRIVE'"
+                    [class.!bg-orange-50]="m.type === 'PUBLIC'"
+                    [class.!text-orange-700]="m.type === 'PUBLIC'">
+            {{ m.type === 'PRIVE' ? 'Privé' : 'Public' }}
+          </mat-chip>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div class="flex items-start gap-2">
+            <mat-icon class="!text-base !w-4 !h-4 text-gray-400 mt-0.5">event</mat-icon>
+            <div>
+              <div class="text-xs text-gray-500">Date</div>
+              <div class="text-gray-800">
+                {{ m.dateHeureDebut | date:'EEEE dd MMMM yyyy':'':'fr-BE' }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-start gap-2">
+            <mat-icon class="!text-base !w-4 !h-4 text-gray-400 mt-0.5">schedule</mat-icon>
+            <div>
+              <div class="text-xs text-gray-500">Horaire</div>
+              <div class="text-gray-800">
+                {{ m.dateHeureDebut | date:'HH:mm':'':'fr-BE' }}
+                – {{ m.dateHeureFin | date:'HH:mm':'':'fr-BE' }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-start gap-2">
+            <mat-icon class="!text-base !w-4 !h-4 text-gray-400 mt-0.5">apartment</mat-icon>
+            <div>
+              <div class="text-xs text-gray-500">Lieu</div>
+              <div class="text-gray-800">
+                {{ m.siteNom }} · Terrain {{ m.terrainNumero }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-start gap-2">
+            <mat-icon class="!text-base !w-4 !h-4 text-gray-400 mt-0.5">person</mat-icon>
+            <div>
+              <div class="text-xs text-gray-500">Organisateur</div>
+              <div class="text-gray-800">
+                {{ m.organisateurNom }}
+                <span class="text-xs text-gray-500 font-mono ml-1">
+                  ({{ m.organisateurMatricule }})
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Joueurs inscrits -->
+    <mat-card>
+      <mat-card-content class="!p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-gray-800">
+            Joueurs ({{ m.nombreJoueursPayes }}/4 payés)
+          </h2>
+          @if (m.placesDisponibles > 0 && m.statut === 'PROGRAMME') {
+            <span class="text-sm text-gray-500">
+              {{ m.placesDisponibles }} place{{ m.placesDisponibles > 1 ? 's' : '' }} libre{{ m.placesDisponibles > 1 ? 's' : '' }}
+            </span>
+          }
+        </div>
+
+        <div class="flex flex-col gap-2">
+          @for (i of m.inscriptions; track i.id) {
+            <div class="flex items-center gap-3 p-2 rounded border border-gray-100">
+              <mat-icon class="text-gray-400">account_circle</mat-icon>
+              <div class="flex-1">
+                <div class="font-medium text-gray-800">{{ i.joueurNom }}</div>
+                <div class="text-xs text-gray-500 font-mono">{{ i.joueurMatricule }}</div>
+              </div>
+              @if (i.estOrganisateur) {
+                <mat-chip class="!bg-blue-50 !text-blue-700 !text-xs">Organisateur</mat-chip>
+              }
+              @if (i.paye) {
+                <span class="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
+                  <mat-icon class="!text-base !w-4 !h-4">check_circle</mat-icon>
+                  Payé
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 text-xs text-orange-700 font-medium">
+                  <mat-icon class="!text-base !w-4 !h-4">pending</mat-icon>
+                  En attente
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Actions -->
+    @if (peutPayer() || peutRejoindre() || peutInviter() || peutAnnuler()) {
+      <mat-card>
+        <mat-card-content class="!p-4 !flex !flex-wrap !gap-2">
+
+          @if (peutPayer()) {
+            <button mat-flat-button color="primary"
+                    [disabled]="loading() || !soldeSuffisant()"
+                    (click)="payer()">
+              <mat-icon>payments</mat-icon>
+              Payer ma part ({{ PRIX_PAR_JOUEUR }} €)
+            </button>
+            @if (!soldeSuffisant()) {
+              <span class="text-xs text-red-600 italic ml-2 self-center">
+                Solde insuffisant
+              </span>
+            }
+          }
+
+          @if (peutRejoindre()) {
+            <button mat-flat-button color="primary"
+                    [disabled]="loading() || !soldeSuffisant()"
+                    (click)="rejoindre()">
+              <mat-icon>group_add</mat-icon>
+              Rejoindre ({{ PRIX_PAR_JOUEUR }} €)
+            </button>
+            @if (!soldeSuffisant()) {
+              <span class="text-xs text-red-600 italic ml-2 self-center">
+                Solde insuffisant
+              </span>
+            }
+          }
+
+          @if (peutInviter()) {
+            <button mat-stroked-button color="primary"
+                    [disabled]="loading()"
+                    (click)="openInviteDialog()">
+              <mat-icon>person_add</mat-icon>
+              Inviter un joueur
+            </button>
+          }
+
+          @if (peutAnnuler()) {
+            <button mat-stroked-button color="warn"
+                    [disabled]="loading()"
+                    (click)="annulerMatch()">
+              <mat-icon>cancel</mat-icon>
+              Annuler le match
+            </button>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+}
