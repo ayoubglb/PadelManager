@@ -1,4 +1,7 @@
+import { Transaction } from './transaction.types';
 // Type d'un match : privé (organisateur + invités) ou public (n'importe qui peut rejoindre).
+
+import {TypeTransaction} from './transaction.types';
 
 export type TypeMatch = 'PRIVE' | 'PUBLIC';
 
@@ -81,3 +84,19 @@ export interface MatchDetail extends Match {
   nombreJoueursPayes: number;
   placesDisponibles: number;
 }
+
+// Body de POST /matchs/{id}/joueurs (inviter un joueur).
+
+export interface InviterJoueurRequest {
+  matricule: string;
+}
+
+// Réponse de POST /matchs/{id}/annuler.
+
+export interface AnnulationMatchResponse {
+  matchId: number;
+  nombreRemboursements: number;
+  remboursements: Transaction[];
+}
+
+
