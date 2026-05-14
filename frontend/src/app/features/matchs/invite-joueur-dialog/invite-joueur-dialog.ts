@@ -19,7 +19,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
-  filter,
+  filter, Observable,
   of,
   startWith,
   switchMap,
@@ -68,14 +68,14 @@ export class InviteJoueurDialog {
   readonly inviting = signal(false);
 
   // Résultats de la recherche, mis à jour automatiquement via debounce + distinct + min 3 chars
-  readonly resultats = toSignal<UtilisateurRechercheResultat[]>(
+  readonly resultats = toSignal(
     this.searchCtrl.valueChanges.pipe(
       startWith(''),
       debounceTime(300),
       distinctUntilChanged(),
-      switchMap((q) => {
+      switchMap((q): Observable<UtilisateurRechercheResultat[]> => {
         if (!q || q.length < 3) {
-          return of([] as UtilisateurRechercheResultat[]);
+          return of([]);
         }
         return this.utilisateurService.recherche(q, 10).pipe(
           catchError((err) => {

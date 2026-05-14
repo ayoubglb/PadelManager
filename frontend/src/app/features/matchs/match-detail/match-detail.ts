@@ -13,6 +13,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, BehaviorSubject } from 'rxjs';
+import {
+  InviteJoueurDialog,
+  InviteJoueurDialogData,
+} from '../invite-joueur-dialog/invite-joueur-dialog';
 
 import { MatchService } from '../../../core/api/match.service';
 import { MatchDetail, InscriptionMatch } from '../../../core/api/match.types';
@@ -224,7 +228,31 @@ export class MatchDetailPage {
   }
 
   openInviteDialog(): void {
-    this.snack.open("Dialog d'invitation à venir", 'OK', { duration: 2500 });
+    const m = this.match();
+    if (!m) return;
+
+    const data: InviteJoueurDialogData = {
+      matchId: m.id,
+      matriculesDejaInscrits: m.inscriptions
+        .filter((i) => i.statut === 'INSCRIT')
+        .map((i) => i.joueurMatricule),
+    };
+
+    const ref = this.dialog.open(InviteJoueurDialog, {
+      width: '500px',
+      data,
+    });
+
+    ref.afterClosed().subscribe((result?: { success: boolean; joueurNom: string }) => {
+      if (result?.success) {
+        this.snack.open(
+          `${result.joueurNom} a été invité au match.`,
+          'OK',
+          { duration: 3000 }
+        );
+        this.reloadTrigger$.next();
+      }
+    });
   }
 
   retour(): void {
