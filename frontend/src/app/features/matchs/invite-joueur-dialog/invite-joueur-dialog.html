@@ -1,0 +1,60 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">person_add</mat-icon>
+  Inviter un joueur
+</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-gray-600 mb-3">
+    Recherchez un membre par son nom, prénom ou matricule. La recherche démarre
+    à partir de 3 caractères.
+  </p>
+
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>Rechercher un membre</mat-label>
+    <input matInput [formControl]="searchCtrl" placeholder="Ex: Dupont, Marc ou S100002" />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <!-- État : pas encore tapé 3 caractères -->
+  @if (!hasQuery()) {
+    <div class="text-center py-6 text-gray-400 text-sm">
+      <mat-icon class="!text-3xl !w-8 !h-8 mb-1">search</mat-icon>
+      <p>Tapez au moins 3 caractères pour lancer la recherche.</p>
+    </div>
+  } @else if (resultatsFiltres().length === 0) {
+    <div class="text-center py-6 text-gray-500 text-sm">
+      <mat-icon class="!text-3xl !w-8 !h-8 mb-1">person_off</mat-icon>
+      <p>Aucun membre trouvé pour cette recherche.</p>
+    </div>
+  } @else {
+    <mat-list class="!p-0 max-h-80 overflow-y-auto border border-gray-200 rounded">
+      @for (user of resultatsFiltres(); track user.id) {
+        <mat-list-item class="!h-auto !py-2 hover:!bg-gray-50">
+          <mat-icon matListItemIcon class="text-gray-400">account_circle</mat-icon>
+          <div matListItemTitle class="font-medium">
+            {{ user.prenom }} {{ user.nom }}
+          </div>
+          <div matListItemLine class="text-xs text-gray-500">
+            <span class="font-mono">{{ user.matricule }}</span>
+            <span class="mx-1">·</span>
+            <span>{{ user.role | roleLabel }}</span>
+          </div>
+          <button
+            mat-flat-button
+            color="primary"
+            matListItemMeta
+            [disabled]="inviting()"
+            (click)="invite(user)"
+          >
+            <mat-icon>send</mat-icon>
+            Inviter
+          </button>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="inviting()">Fermer</button>
+</mat-dialog-actions>
