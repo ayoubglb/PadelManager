@@ -8,6 +8,8 @@ import {
   Match,
   MatchCreateRequest,
   MatchDetail,
+  MatchPublicCatalogue,
+  MatchsPublicsFiltres,
   MesMatch,
 } from './match.types';
 import { TransactionService } from './transaction.service';
@@ -26,6 +28,18 @@ export class MatchService {
   getMesMatchs(aVenir: boolean): Observable<MesMatch[]> {
     const params = new HttpParams().set('aVenir', aVenir);
     return this.http.get<MesMatch[]>(`${API_BASE_URL}/matchs/mes-matchs`, {
+      params,
+    });
+  }
+  // Catalogue des matchs publics ouverts. Filtres optionnels : siteId, dateDebut, dateFin, placesMin
+  getMatchsPublics(filtres: MatchsPublicsFiltres = {}): Observable<MatchPublicCatalogue[]> {
+    let params = new HttpParams();
+    if (filtres.siteId != null) params = params.set('siteId', filtres.siteId);
+    if (filtres.dateDebut) params = params.set('dateDebut', filtres.dateDebut);
+    if (filtres.dateFin) params = params.set('dateFin', filtres.dateFin);
+    if (filtres.placesMin != null) params = params.set('placesMin', filtres.placesMin);
+
+    return this.http.get<MatchPublicCatalogue[]>(`${API_BASE_URL}/matchs/publics`, {
       params,
     });
   }

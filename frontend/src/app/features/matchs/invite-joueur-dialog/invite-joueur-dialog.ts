@@ -34,7 +34,7 @@ import { RoleLabelPipe } from '../../../shared/pipes/role-label.pipe';
 // Données injectées au dialog au moment de l'ouverture
 export interface InviteJoueurDialogData {
   matchId: number;
-  /** Matricules déjà inscrits au match (pour les filtrer dans les résultats). */
+  // Matricules déjà inscrits au match (pour les filtrer dans les résultats)
   matriculesDejaInscrits: string[];
 }
 
