@@ -1,0 +1,89 @@
+<div class="flex flex-col gap-4 max-w-5xl mx-auto">
+
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Matchs publics</h1>
+    <p class="text-sm text-gray-500">
+      Découvrez les matchs publics ouverts et rejoignez-en un.
+    </p>
+  </div>
+
+  <!-- Filtres -->
+  <mat-card>
+    <mat-card-content class="!pt-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Site -->
+        <app-site-selector [(selectedSiteId)]="siteId" />
+
+        <!-- Date début -->
+        <mat-form-field appearance="outline">
+          <mat-label>Du</mat-label>
+          <input
+            matInput
+            [matDatepicker]="datePickerDebut"
+            [formControl]="dateDebutCtrl"
+            [min]="minDate"
+            readonly
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="datePickerDebut"></mat-datepicker-toggle>
+          <mat-datepicker #datePickerDebut></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Date fin -->
+        <mat-form-field appearance="outline">
+          <mat-label>Au</mat-label>
+          <input
+            matInput
+            [matDatepicker]="datePickerFin"
+            [formControl]="dateFinCtrl"
+            [min]="minDate"
+            readonly
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="datePickerFin"></mat-datepicker-toggle>
+          <mat-datepicker #datePickerFin></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Places restantes -->
+        <mat-form-field appearance="outline">
+          <mat-label>Places restantes (min)</mat-label>
+          <mat-select [value]="placesMin()" (selectionChange)="placesMin.set($event.value)">
+            <mat-option [value]="null">Toutes</mat-option>
+            <mat-option [value]="1">≥ 1 place</mat-option>
+            <mat-option [value]="2">≥ 2 places</mat-option>
+            <mat-option [value]="3">≥ 3 places</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="flex justify-end mt-2">
+        <button mat-stroked-button (click)="reset()">
+          <mat-icon>clear</mat-icon>
+          Réinitialiser
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Résultats -->
+  @if (loading()) {
+    <div class="flex items-center justify-center p-8">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (!hasResults()) {
+    <mat-card>
+      <mat-card-content class="text-center py-8 text-gray-500">
+        <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">search_off</mat-icon>
+        <p>Aucun match public ne correspond à vos critères.</p>
+        <p class="text-sm mt-1">Essayez d'élargir les filtres ou revenez plus tard.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="text-sm text-gray-600 px-1">
+      {{ matchs().length }} match{{ matchs().length > 1 ? 's' : '' }} trouvé{{ matchs().length > 1 ? 's' : '' }}
+    </div>
+    <div class="flex flex-col gap-3">
+      @for (m of matchs(); track m.id) {
+        <app-public-match-card [match]="m" (detailClick)="onDetailClick($event)" />
+      }
+    </div>
+  }
+</div>

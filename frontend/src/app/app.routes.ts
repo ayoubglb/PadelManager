@@ -28,8 +28,8 @@ export const routes: Routes = [
       {
         path: 'matchs/publics',
         loadComponent: () =>
-          import('./shared/components/placeholder/placeholder').then(
-            (m) => m.Placeholder
+          import('./features/matchs/matchs-publics/matchs-publics').then(
+            (m) => m.MatchsPublics
           ),
       },
       {
