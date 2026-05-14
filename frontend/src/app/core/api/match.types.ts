@@ -99,4 +99,26 @@ export interface AnnulationMatchResponse {
   remboursements: Transaction[];
 }
 
+// DTO retourné par GET /matchs/publics : catalogue des matchs publics ouverts.
+// Encore plus léger que MesMatch — on n'est pas inscrit donc pas de monRole/maPartPayee,
+// forcément PUBLIC + PROGRAMME donc pas de type/statut.
+export interface MatchPublicCatalogue {
+  id: number;
+  siteId: number;
+  siteNom: string;
+  terrainNumero: number;
+  dateHeureDebut: string;
+  dateHeureFin: string;
+  organisateurNom: string;
+  placesRestantes: number;
+}
+
+// Filtres optionnels pour GET /matchs/publics
+export interface MatchsPublicsFiltres {
+  siteId?: number;
+  dateDebut?: string; // ISO YYYY-MM-DD
+  dateFin?: string; // ISO YYYY-MM-DD
+  placesMin?: number;
+}
+
 
