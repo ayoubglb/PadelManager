@@ -27,31 +27,32 @@
       <p>Aucun membre trouvé pour cette recherche.</p>
     </div>
   } @else {
-    <mat-list class="!p-0 max-h-80 overflow-y-auto border border-gray-200 rounded">
+    <div class="max-h-80 overflow-y-auto border border-gray-200 rounded">
       @for (user of resultatsFiltres(); track user.id) {
-        <mat-list-item class="!h-auto !py-2 hover:!bg-gray-50">
-          <mat-icon matListItemIcon class="text-gray-400">account_circle</mat-icon>
-          <div matListItemTitle class="font-medium">
-            {{ user.prenom }} {{ user.nom }}
-          </div>
-          <div matListItemLine class="text-xs text-gray-500">
-            <span class="font-mono">{{ user.matricule }}</span>
-            <span class="mx-1">·</span>
-            <span>{{ user.role | roleLabel }}</span>
+        <div class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
+          <mat-icon class="text-gray-400">account_circle</mat-icon>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-gray-800 truncate">
+              {{ user.prenom }} {{ user.nom }}
+            </div>
+            <div class="text-xs text-gray-500">
+              <span class="font-mono">{{ user.matricule }}</span>
+              <span class="mx-1">·</span>
+              <span>{{ user.role | roleLabel }}</span>
+            </div>
           </div>
           <button
             mat-flat-button
             color="primary"
-            matListItemMeta
             [disabled]="inviting()"
             (click)="invite(user)"
           >
             <mat-icon>send</mat-icon>
             Inviter
           </button>
-        </mat-list-item>
+        </div>
       }
-    </mat-list>
+    </div>
   }
 </mat-dialog-content>
 
