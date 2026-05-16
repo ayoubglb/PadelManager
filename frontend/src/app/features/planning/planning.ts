@@ -228,20 +228,24 @@ export class Planning {
 
     ref.afterClosed().subscribe((result: MatchCreateDialogResult | undefined) => {
       if (!result) return;
+
       if (result.type === 'PRIVE') {
         this.snack.open(
-          `Match privé #${result.matchId} créé. Invitez vos joueurs.`,
+          `Match privé #${result.matchId} créé. Vous pouvez maintenant inviter vos joueurs.`,
           'OK',
-          { duration: 4000 }
+          { duration: 3000 }
         );
+        // Naviguer vers le détail pour inviter les joueurs
+        this.router.navigate(['/matchs', result.matchId]);
       } else {
         this.snack.open(
           `Match public #${result.matchId} créé. Visible dans le catalogue.`,
           'OK',
           { duration: 4000 }
         );
+        // Rafraîchir le planning pour voir le nouveau match
+        this.refreshPlanning();
       }
-      this.refreshPlanning();
     });
   }
 

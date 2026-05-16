@@ -13,6 +13,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PenaliteService } from '../../core/api/penalite.service';
 import { RoleLabelPipe } from '../../shared/pipes/role-label.pipe';
 import { SoldeBadge } from '../../shared/components/solde-badge/solde-badge';
+import { humaniserMotifPenalite } from '../../shared/utils/penalite-motif';
 
 @Component({
   selector: 'app-profil',
@@ -36,6 +37,7 @@ import { SoldeBadge } from '../../shared/components/solde-badge/solde-badge';
 export class Profil {
   private authService = inject(AuthService);
   private penaliteService = inject(PenaliteService);
+  readonly humaniserMotifPenalite = humaniserMotifPenalite;
 
   // Profil exposé par AuthService
 
