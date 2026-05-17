@@ -1,0 +1,59 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">{{ isEdit ? 'edit_location' : 'add_location' }}</mat-icon>
+  {{ isEdit ? 'Modifier le site' : 'Nouveau site' }}
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-3 pt-2">
+    <mat-form-field appearance="outline">
+      <mat-label>Nom</mat-label>
+      <input matInput formControlName="nom" placeholder="Ex: Anderlecht" maxlength="100" />
+      @if (form.controls.nom.hasError('required') && form.controls.nom.touched) {
+        <mat-error>Le nom est obligatoire</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Adresse</mat-label>
+      <input matInput formControlName="adresse" placeholder="Ex: Rue du Padel 12" maxlength="255" />
+      @if (form.controls.adresse.hasError('required') && form.controls.adresse.touched) {
+        <mat-error>L'adresse est obligatoire</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <mat-form-field appearance="outline" class="sm:col-span-1">
+        <mat-label>Code postal</mat-label>
+        <input matInput formControlName="codePostal" placeholder="Ex: 1070" maxlength="20" />
+        @if (form.controls.codePostal.hasError('required') && form.controls.codePostal.touched) {
+          <mat-error>Code postal obligatoire</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="sm:col-span-2">
+        <mat-label>Ville</mat-label>
+        <input matInput formControlName="ville" placeholder="Ex: Anderlecht" maxlength="100" />
+        @if (form.controls.ville.hasError('required') && form.controls.ville.touched) {
+          <mat-error>La ville est obligatoire</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid || saving()"
+  >
+    @if (saving()) {
+      <mat-progress-spinner diameter="18" mode="indeterminate" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    {{ isEdit ? 'Enregistrer' : 'Créer' }}
+  </button>
+</mat-dialog-actions>
