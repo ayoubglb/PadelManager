@@ -1,0 +1,120 @@
+<div class="flex flex-col gap-4 max-w-6xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Gestion des sites</h1>
+      <p class="text-sm text-gray-500">
+        Créer, modifier et désactiver les sites de padel
+      </p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Nouveau site
+    </button>
+  </div>
+
+  <!-- Indicateurs -->
+  <div class="flex flex-wrap gap-3 text-sm">
+    <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1 rounded-full">
+      <mat-icon class="!text-base !w-4 !h-4">check_circle</mat-icon>
+      {{ nbActifs() }} site{{ nbActifs() > 1 ? 's' : '' }} actif{{ nbActifs() > 1 ? 's' : '' }}
+    </span>
+    @if (nbInactifs() > 0) {
+      <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+        <mat-icon class="!text-base !w-4 !h-4">block</mat-icon>
+        {{ nbInactifs() }} désactivé{{ nbInactifs() > 1 ? 's' : '' }}
+      </span>
+    }
+  </div>
+
+  <!-- Tableau -->
+  @if (loading() && sites().length === 0) {
+    <div class="flex items-center justify-center p-8">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (sites().length === 0) {
+    <mat-card>
+      <mat-card-content class="text-center py-8 text-gray-500">
+        <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">apartment</mat-icon>
+        <p>Aucun site enregistré.</p>
+        <p class="text-sm mt-1">Cliquez sur "Nouveau site" pour en créer un.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-card>
+      <mat-card-content class="!p-0">
+        <div class="overflow-x-auto">
+          <table mat-table [dataSource]="sites()" class="!w-full">
+            <ng-container matColumnDef="nom">
+              <th mat-header-cell *matHeaderCellDef>Nom</th>
+              <td mat-cell *matCellDef="let s" class="font-medium">{{ s.nom }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="adresse">
+              <th mat-header-cell *matHeaderCellDef>Adresse</th>
+              <td mat-cell *matCellDef="let s">{{ s.adresse }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="codePostal">
+              <th mat-header-cell *matHeaderCellDef>CP</th>
+              <td mat-cell *matCellDef="let s" class="font-mono">{{ s.codePostal }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ville">
+              <th mat-header-cell *matHeaderCellDef>Ville</th>
+              <td mat-cell *matCellDef="let s">{{ s.ville }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="statut">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let s">
+                @if (s.active) {
+                  <mat-chip class="!bg-green-50 !text-green-700">Actif</mat-chip>
+                } @else {
+                  <mat-chip class="!bg-gray-100 !text-gray-600">Désactivé</mat-chip>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="!text-right">Actions</th>
+              <td mat-cell *matCellDef="let s" class="!text-right">
+                <button
+                  mat-icon-button
+                  matTooltip="Modifier"
+                  (click)="openEditDialog(s)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                @if (s.active) {
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    matTooltip="Désactiver"
+                    (click)="deactivate(s)"
+                  >
+                    <mat-icon>block</mat-icon>
+                  </button>
+                } @else {
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    matTooltip="Réactiver"
+                    (click)="activate(s)"
+                  >
+                    <mat-icon>refresh</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"
+                [class.opacity-60]="!row.active"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

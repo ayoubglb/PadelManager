@@ -6,9 +6,7 @@ export const ADMIN_ROUTES: Routes = [
     path: 'sites',
     canActivate: [adminGlobalGuard],
     loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
+      import('./admin-sites/admin-sites').then((m) => m.AdminSites),
   },
   {
     path: 'fermetures',
