@@ -1,0 +1,46 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">{{ isEdit ? 'edit' : 'add' }}</mat-icon>
+  {{ isEdit ? 'Modifier le terrain' : 'Nouveau terrain' }}
+</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-gray-600 mb-3">
+    Site : <span class="font-semibold">{{ data.siteNom }}</span>
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-3 pt-2">
+    <mat-form-field appearance="outline">
+      <mat-label>Numéro</mat-label>
+      <input matInput type="number" formControlName="numero" min="1" max="999" />
+      <mat-hint>Unique au sein du site</mat-hint>
+      @if (form.controls.numero.hasError('required') && form.controls.numero.touched) {
+        <mat-error>Le numéro est obligatoire</mat-error>
+      } @else if (form.controls.numero.hasError('min') || form.controls.numero.hasError('max')) {
+        <mat-error>Le numéro doit être entre 1 et 999</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nom (optionnel)</mat-label>
+      <input matInput formControlName="nom" placeholder="Ex: Court Central" maxlength="100" />
+      <mat-hint>Un nom évocateur pour aider les joueurs</mat-hint>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid || saving()"
+  >
+    @if (saving()) {
+      <mat-progress-spinner diameter="18" mode="indeterminate" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    {{ isEdit ? 'Enregistrer' : 'Créer' }}
+  </button>
+</mat-dialog-actions>

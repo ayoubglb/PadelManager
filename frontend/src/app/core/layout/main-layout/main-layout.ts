@@ -44,6 +44,8 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['ADMIN_SITE'] },
   { label: 'Reporting site', icon: 'bar_chart', route: '/admin/reporting-site',
     roles: ['ADMIN_SITE', 'ADMIN_GLOBAL'] },
+  { label: 'Terrains', icon: 'grid_view', route: '/admin/terrains',
+    roles: ['ADMIN_GLOBAL', 'ADMIN_SITE'] },
 
   // Admin Global
   { label: 'Sites', icon: 'apartment', route: '/admin/sites',

@@ -9,6 +9,12 @@ export const ADMIN_ROUTES: Routes = [
       import('./admin-sites/admin-sites').then((m) => m.AdminSites),
   },
   {
+    path: 'terrains',
+    canActivate: [adminSiteGuard],
+    loadComponent: () =>
+      import('./admin-terrains/admin-terrains').then((m) => m.AdminTerrains),
+  },
+  {
     path: 'fermetures',
     canActivate: [adminGlobalGuard],
     loadComponent: () =>
