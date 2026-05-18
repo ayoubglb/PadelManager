@@ -15,16 +15,14 @@ export const ADMIN_ROUTES: Routes = [
       import('./admin-terrains/admin-terrains').then((m) => m.AdminTerrains),
   },
   {
-    path: 'fermetures',
-    canActivate: [adminGlobalGuard],
+    path: 'horaires',
+    canActivate: [adminSiteGuard],
     loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
+      import('./admin-horaires/admin-horaires').then((m) => m.AdminHoraires),
   },
   {
-    path: 'administrateurs',
-    canActivate: [adminGlobalGuard],
+    path: 'fermetures',
+    canActivate: [adminSiteGuard],
     loadComponent: () =>
       import('../../shared/components/placeholder/placeholder').then(
         (m) => m.Placeholder
@@ -33,14 +31,6 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'reporting-global',
     canActivate: [adminGlobalGuard],
-    loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
-  },
-  {
-    path: 'mon-site',
-    canActivate: [adminSiteGuard],
     loadComponent: () =>
       import('../../shared/components/placeholder/placeholder').then(
         (m) => m.Placeholder
