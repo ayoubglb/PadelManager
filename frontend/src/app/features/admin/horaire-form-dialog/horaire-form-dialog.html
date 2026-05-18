@@ -1,0 +1,82 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">schedule</mat-icon>
+  Nouvel horaire d'ouverture
+</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-gray-600 mb-3">
+    Site : <span class="font-semibold">{{ data.siteNom }}</span>
+  </p>
+
+  <p class="text-xs text-gray-500 italic mb-4">
+    Note : un horaire ne peut pas être modifié après création. Pour le changer,
+    il faut le supprimer puis en recréer un nouveau (seulement possible pour les années à venir).
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-3">
+    <mat-form-field appearance="outline">
+      <mat-label>Année</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="annee"
+        [min]="anneeCourante"
+        [max]="anneeCourante + 10"
+      />
+      @if (form.controls.annee.hasError('required') && form.controls.annee.touched) {
+        <mat-error>L'année est obligatoire</mat-error>
+      } @else if (form.controls.annee.hasError('min')) {
+        <mat-error>L'année doit être au minimum {{ anneeCourante }}</mat-error>
+      } @else if (form.controls.annee.hasError('max')) {
+        <mat-error>L'année est trop lointaine (max {{ anneeCourante + 10 }})</mat-error>
+      } @else if (anneeDejaUtilisee()) {
+        <mat-error>Un horaire existe déjà pour cette année</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="grid grid-cols-2 gap-3">
+      <mat-form-field appearance="outline">
+        <mat-label>Heure d'ouverture</mat-label>
+        <input matInput type="time" formControlName="heureDebut" />
+        @if (form.controls.heureDebut.hasError('required') && form.controls.heureDebut.touched) {
+          <mat-error>Heure obligatoire</mat-error>
+        } @else if (form.controls.heureDebut.hasError('timeFormat')) {
+          <mat-error>Format invalide</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Heure de fermeture</mat-label>
+        <input matInput type="time" formControlName="heureFin" />
+        @if (form.controls.heureFin.hasError('required') && form.controls.heureFin.touched) {
+          <mat-error>Heure obligatoire</mat-error>
+        } @else if (form.controls.heureFin.hasError('timeFormat')) {
+          <mat-error>Format invalide</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (heuresInvalides()) {
+      <p class="text-sm text-red-600 italic">
+        L'heure de fermeture doit être après l'heure d'ouverture.
+      </p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid || anneeDejaUtilisee() || heuresInvalides() || saving()"
+  >
+    @if (saving()) {
+      <mat-progress-spinner diameter="18" mode="indeterminate" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Créer
+  </button>
+</mat-dialog-actions>

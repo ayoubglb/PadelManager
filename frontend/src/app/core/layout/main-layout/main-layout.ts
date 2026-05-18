@@ -39,23 +39,23 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Mon profil', icon: 'person', route: '/profil',
     roles: ['MEMBRE_GLOBAL', 'MEMBRE_SITE', 'MEMBRE_LIBRE', 'ADMIN_GLOBAL', 'ADMIN_SITE'] },
 
-  // Admin Site
-  { label: 'Mon site', icon: 'business', route: '/admin/mon-site',
-    roles: ['ADMIN_SITE'] },
-  { label: 'Reporting site', icon: 'bar_chart', route: '/admin/reporting-site',
-    roles: ['ADMIN_SITE', 'ADMIN_GLOBAL'] },
+  // Admins (gestion partagée Admin Global + Admin Site)
   { label: 'Terrains', icon: 'grid_view', route: '/admin/terrains',
     roles: ['ADMIN_GLOBAL', 'ADMIN_SITE'] },
+  { label: 'Horaires', icon: 'schedule', route: '/admin/horaires',
+    roles: ['ADMIN_GLOBAL', 'ADMIN_SITE'] },
+  { label: 'Fermetures', icon: 'event_busy', route: '/admin/fermetures',
+    roles: ['ADMIN_GLOBAL', 'ADMIN_SITE'] },
 
-  // Admin Global
+  // Admin Global uniquement
   { label: 'Sites', icon: 'apartment', route: '/admin/sites',
-    roles: ['ADMIN_GLOBAL'] },
-  { label: 'Fermetures globales', icon: 'event_busy', route: '/admin/fermetures',
-    roles: ['ADMIN_GLOBAL'] },
-  { label: 'Administrateurs', icon: 'admin_panel_settings', route: '/admin/administrateurs',
     roles: ['ADMIN_GLOBAL'] },
   { label: 'Reporting global', icon: 'analytics', route: '/admin/reporting-global',
     roles: ['ADMIN_GLOBAL'] },
+
+  // Admin Site (et global)
+  { label: 'Reporting site', icon: 'bar_chart', route: '/admin/reporting-site',
+    roles: ['ADMIN_SITE', 'ADMIN_GLOBAL'] },
 ];
 
 @Component({

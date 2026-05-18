@@ -1,0 +1,127 @@
+<div class="flex flex-col gap-4 max-w-5xl mx-auto">
+
+  <!-- En-tête -->
+  <div class="flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Horaires d'ouverture</h1>
+      <p class="text-sm text-gray-500">
+        @if (isAdminSite()) {
+          Horaires de votre site, par année civile
+        } @else {
+          Sélectionnez un site pour gérer ses horaires
+        }
+      </p>
+    </div>
+    @if (selectedSiteId() !== null) {
+      <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon>
+        Nouvel horaire
+      </button>
+    }
+  </div>
+
+  <!-- Sélecteur de site (Admin Global uniquement) -->
+  @if (!isAdminSite()) {
+    <mat-card>
+      <mat-card-content class="!pt-4">
+        <app-site-selector [(selectedSiteId)]="selectedSiteId" />
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (selectedSiteId() === null) {
+    <mat-card>
+      <mat-card-content class="text-center py-8 text-gray-500">
+        <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">apartment</mat-icon>
+        <p>Sélectionnez un site pour afficher ses horaires.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else if (loading() && horairesTries().length === 0) {
+    <div class="flex items-center justify-center p-8">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (horairesTries().length === 0) {
+    <mat-card class="!bg-yellow-50 !border-l-4 !border-yellow-400">
+      <mat-card-content class="!flex !items-start !gap-3 !p-4">
+        <mat-icon class="!text-yellow-600 !text-3xl !w-8 !h-8">warning</mat-icon>
+        <div class="flex-1">
+          <div class="font-semibold text-yellow-800 mb-1">Aucun horaire défini</div>
+          <p class="text-sm text-yellow-700">
+            Aucune réservation ne sera possible sur ce site tant qu'un horaire
+            n'aura pas été défini pour l'année en cours ou à venir.
+          </p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-card>
+      <mat-card-content class="!p-0">
+        <div class="overflow-x-auto">
+          <table mat-table [dataSource]="horairesTries()" class="!w-full">
+
+            <ng-container matColumnDef="annee">
+              <th mat-header-cell *matHeaderCellDef class="!w-24">Année</th>
+              <td mat-cell *matCellDef="let h" class="font-semibold">
+                {{ h.annee }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="heureDebut">
+              <th mat-header-cell *matHeaderCellDef>Ouverture</th>
+              <td mat-cell *matCellDef="let h" class="font-mono">
+                {{ formatHeure(h.heureDebut) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="heureFin">
+              <th mat-header-cell *matHeaderCellDef>Fermeture</th>
+              <td mat-cell *matCellDef="let h" class="font-mono">
+                {{ formatHeure(h.heureFin) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="statut">
+              <th mat-header-cell *matHeaderCellDef>Statut</th>
+              <td mat-cell *matCellDef="let h">
+                @if (isAnneePassee(h.annee)) {
+                  <mat-chip class="!bg-gray-100 !text-gray-600">Archivé</mat-chip>
+                } @else if (isAnneeCourante(h.annee)) {
+                  <mat-chip class="!bg-blue-50 !text-blue-700">Année en cours</mat-chip>
+                } @else {
+                  <mat-chip class="!bg-green-50 !text-green-700">À venir</mat-chip>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="!text-right">Actions</th>
+              <td mat-cell *matCellDef="let h" class="!text-right">
+                @if (!isAnneePassee(h.annee) && !isAnneeCourante(h.annee)) {
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    matTooltip="Supprimer cet horaire"
+                    (click)="delete(h)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                } @else {
+                  <span class="text-xs text-gray-400 italic mr-2">Non modifiable</span>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"
+                [class.opacity-60]="isAnneePassee(row.annee)"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <p class="text-xs text-gray-500 italic px-1">
+      Les horaires des années passées et de l'année en cours ne peuvent pas être supprimés
+      pour préserver l'historique des réservations.
+    </p>
+  }
+</div>
