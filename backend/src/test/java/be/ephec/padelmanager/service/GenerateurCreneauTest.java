@@ -118,4 +118,26 @@ class GenerateurCreneauTest {
                 new CreneauDTO(LocalTime.of(8, 0), LocalTime.of(9, 30))
         );
     }
+
+    @Test
+    void ne_doit_pas_generer_de_creneau_qui_passe_minuit() {
+        // Setup : horaire 07:00 → 23:00
+        HoraireSite horaire = HoraireSite.builder()
+                .heureDebut(LocalTime.of(7, 0))
+                .heureFin(LocalTime.of(23, 0))
+                .build();
+        when(horaireSiteRepository.findBySiteIdAndAnnee(1L, 2027))
+                .thenReturn(Optional.of(horaire));
+
+        // Act
+        List<CreneauDTO> creneaux = generateurCreneau.genererCreneaux(1L, 2027);
+
+        // Assert
+        assertThat(creneaux).hasSize(9);
+        assertThat(creneaux.get(8).fin()).isEqualTo(LocalTime.of(22, 30));
+        // Aucun créneau ne doit avoir une fin avant son début
+        assertThat(creneaux).allSatisfy(c ->
+                assertThat(c.fin()).isAfter(c.debut())
+        );
+    }
 }

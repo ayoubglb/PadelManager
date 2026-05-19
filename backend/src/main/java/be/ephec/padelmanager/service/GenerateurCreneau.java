@@ -31,6 +31,7 @@ public class GenerateurCreneau {
     }
 
     // Itère depuis heureDebut, ajoute des créneaux de 1h30 séparés par 15 min, tant que fin ≤ heureFin
+    // Détecte le wrap autour de minuit (LocalTime.plus() boucle silencieusement)
     private List<CreneauDTO> genererCreneauxDepuisHoraire(HoraireSite horaire) {
         List<CreneauDTO> creneaux = new ArrayList<>();
         LocalTime curseur = horaire.getHeureDebut();
@@ -38,11 +39,25 @@ public class GenerateurCreneau {
 
         while (true) {
             LocalTime finCreneau = curseur.plus(DUREE_MATCH);
+
+            // Sécurité : LocalTime.plus() wrap autour de minuit sans erreur.
+            // Si finCreneau passe avant curseur, on a dépassé minuit → on s'arrête.
+            if (finCreneau.isBefore(curseur)) {
+                break;
+            }
             if (finCreneau.isAfter(borneFin)) {
                 break;
             }
+
             creneaux.add(new CreneauDTO(curseur, finCreneau));
-            curseur = finCreneau.plus(PAUSE_ENTRE_MATCHS);
+
+            LocalTime prochainCurseur = finCreneau.plus(PAUSE_ENTRE_MATCHS);
+
+            // Même sécurité pour le curseur suivant
+            if (prochainCurseur.isBefore(curseur)) {
+                break;
+            }
+            curseur = prochainCurseur;
         }
 
         return creneaux;
