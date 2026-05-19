@@ -97,7 +97,8 @@
           </h2>
           @if (m.placesDisponibles > 0 && m.statut === 'PROGRAMME') {
             <span class="text-sm text-gray-500">
-              {{ m.placesDisponibles }} place{{ m.placesDisponibles > 1 ? 's' : '' }} libre{{ m.placesDisponibles > 1 ? 's' : '' }}
+              {{ m.placesDisponibles }} place{{ m.placesDisponibles > 1 ? 's' : '' }}
+              libre{{ m.placesDisponibles > 1 ? 's' : '' }}
             </span>
           }
         </div>
@@ -114,13 +115,13 @@
                 <mat-chip class="!bg-blue-50 !text-blue-700 !text-xs">Organisateur</mat-chip>
               }
               @if (i.paye) {
-                <span class="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
-                  <mat-icon class="!text-base !w-4 !h-4">check_circle</mat-icon>
+                <span class="inline-flex items-center gap-1 text-xs text-green-700 font-medium leading-none">
+                <mat-icon class="!text-base !w-4 !h-4 !leading-none">check_circle</mat-icon>
                   Payé
                 </span>
               } @else {
-                <span class="inline-flex items-center gap-1 text-xs text-orange-700 font-medium">
-                  <mat-icon class="!text-base !w-4 !h-4">pending</mat-icon>
+                <span class="inline-flex items-center gap-1 text-xs text-orange-700 font-medium leading-none">
+                <mat-icon class="!text-base !w-4 !h-4 !leading-none">pending</mat-icon>
                   En attente
                 </span>
               }

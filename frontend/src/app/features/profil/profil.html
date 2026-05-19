@@ -113,13 +113,13 @@
               <dt class="text-xs text-gray-500 uppercase tracking-wide">Statut</dt>
               <dd>
                 @if (user.active) {
-                  <span class="inline-flex items-center gap-1 text-sm text-green-700">
-                    <mat-icon class="!text-base !w-4 !h-4">check_circle</mat-icon>
+                  <span class="inline-flex items-center gap-1 text-sm text-green-700 leading-none">
+                    <mat-icon class="!text-base !w-4 !h-4 !leading-none">check_circle</mat-icon>
                     Compte actif
                   </span>
                 } @else {
-                  <span class="inline-flex items-center gap-1 text-sm text-red-600">
-                    <mat-icon class="!text-base !w-4 !h-4">block</mat-icon>
+                  <span class="inline-flex items-center gap-1 text-sm text-red-600 leading-none">
+                    <mat-icon class="!text-base !w-4 !h-4 !leading-none">block</mat-icon>
                     Compte désactivé
                   </span>
                 }

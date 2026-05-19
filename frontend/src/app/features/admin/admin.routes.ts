@@ -30,16 +30,14 @@ export const ADMIN_ROUTES: Routes = [
     path: 'reporting-global',
     canActivate: [adminGlobalGuard],
     loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
+      import('./admin-reporting/admin-reporting').then((m) => m.AdminReporting),
+    data: { mode: 'global' },
   },
   {
     path: 'reporting-site',
     canActivate: [adminSiteGuard],
     loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
+      import('./admin-reporting/admin-reporting').then((m) => m.AdminReporting),
+    data: { mode: 'site' },
   },
 ];
