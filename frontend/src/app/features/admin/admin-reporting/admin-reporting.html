@@ -73,8 +73,8 @@
       <!-- CA encaissé -->
       <mat-card>
         <mat-card-content class="!p-4">
-          <div class="flex items-center gap-2 mb-2 text-blue-600">
-            <mat-icon class="!text-base !w-4 !h-4">account_balance_wallet</mat-icon>
+          <div class="flex items-center gap-2 mb-2 text-blue-600 leading-none">
+            <mat-icon class="!text-base !w-4 !h-4 !leading-none">account_balance_wallet</mat-icon>
             <span class="text-xs font-semibold uppercase tracking-wide">CA encaissé</span>
           </div>
           <div class="text-2xl font-bold text-gray-800">
@@ -89,8 +89,8 @@
       <!-- Volume des matchs -->
       <mat-card>
         <mat-card-content class="!p-4">
-          <div class="flex items-center gap-2 mb-2 text-green-600">
-            <mat-icon class="!text-base !w-4 !h-4">sports_tennis</mat-icon>
+          <div class="flex items-center gap-2 mb-2 text-green-600 leading-none">
+            <mat-icon class="!text-base !w-4 !h-4 !leading-none">sports_tennis</mat-icon>
             <span class="text-xs font-semibold uppercase tracking-wide">Volume matchs</span>
           </div>
           <div class="text-2xl font-bold text-gray-800">
@@ -105,8 +105,8 @@
       <!-- Matchs totaux -->
       <mat-card>
         <mat-card-content class="!p-4">
-          <div class="flex items-center gap-2 mb-2 text-purple-600">
-            <mat-icon class="!text-base !w-4 !h-4">event_note</mat-icon>
+          <div class="flex items-center gap-2 mb-2 text-purple-600 leading-none">
+            <mat-icon class="!text-base !w-4 !h-4 !leading-none">event_note</mat-icon>
             <span class="text-xs font-semibold uppercase tracking-wide">Matchs totaux</span>
           </div>
           <div class="text-2xl font-bold text-gray-800">{{ r.nombreMatchsTotaux }}</div>
@@ -119,8 +119,8 @@
       <!-- Taux d'annulation -->
       <mat-card>
         <mat-card-content class="!p-4">
-          <div class="flex items-center gap-2 mb-2 text-orange-600">
-            <mat-icon class="!text-base !w-4 !h-4">cancel</mat-icon>
+          <div class="flex items-center gap-2 mb-2 text-orange-600 leading-none">
+            <mat-icon class="!text-base !w-4 !h-4 !leading-none">cancel</mat-icon>
             <span class="text-xs font-semibold uppercase tracking-wide">Annulations</span>
           </div>
           <div class="text-2xl font-bold text-gray-800">
@@ -199,8 +199,8 @@
               <ng-container matColumnDef="nombreMatchsOrganises">
                 <th mat-header-cell *matHeaderCellDef class="!text-right">Matchs organisés</th>
                 <td mat-cell *matCellDef="let o" class="!text-right">
-                  <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-sm font-semibold">
-                    <mat-icon class="!text-base !w-4 !h-4">sports_tennis</mat-icon>
+                  <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-sm font-semibold leading-none">
+                    <mat-icon class="!text-base !w-4 !h-4 !leading-none">sports_tennis</mat-icon>
                     {{ o.nombreMatchsOrganises }}
                   </span>
                 </td>
