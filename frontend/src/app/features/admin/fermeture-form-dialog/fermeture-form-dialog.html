@@ -1,0 +1,66 @@
+<h2 mat-dialog-title class="!flex !items-center !gap-2">
+  <mat-icon class="text-blue-600">event_busy</mat-icon>
+  Nouvelle fermeture
+</h2>
+
+<mat-dialog-content>
+  <p class="text-sm text-gray-600 mb-3">
+    @if (isGlobale) {
+      Type :
+      <span class="font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded">
+        Fermeture globale (tous les sites)
+      </span>
+    } @else {
+      Site : <span class="font-semibold">{{ data.siteNom }}</span>
+    }
+  </p>
+
+  <form [formGroup]="form" class="flex flex-col gap-3 pt-2">
+    <mat-form-field appearance="outline">
+      <mat-label>Date de fermeture</mat-label>
+      <input
+        matInput
+        [matDatepicker]="datePicker"
+        formControlName="dateFermeture"
+        [min]="minDate"
+        readonly
+      />
+      <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
+      <mat-datepicker #datePicker></mat-datepicker>
+      <mat-hint>Date future uniquement</mat-hint>
+      @if (form.controls.dateFermeture.hasError('required') && form.controls.dateFermeture.touched) {
+        <mat-error>La date est obligatoire</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Raison</mat-label>
+      <input
+        matInput
+        formControlName="raison"
+        placeholder="Ex: Maintenance, Jour férié, Tournoi..."
+        maxlength="200"
+      />
+      @if (form.controls.raison.hasError('required') && form.controls.raison.touched) {
+        <mat-error>La raison est obligatoire</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annuler</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid || saving()"
+  >
+    @if (saving()) {
+      <mat-progress-spinner diameter="18" mode="indeterminate" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Créer
+  </button>
+</mat-dialog-actions>

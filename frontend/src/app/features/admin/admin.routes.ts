@@ -24,9 +24,7 @@ export const ADMIN_ROUTES: Routes = [
     path: 'fermetures',
     canActivate: [adminSiteGuard],
     loadComponent: () =>
-      import('../../shared/components/placeholder/placeholder').then(
-        (m) => m.Placeholder
-      ),
+      import('./admin-fermetures/admin-fermetures').then((m) => m.AdminFermetures),
   },
   {
     path: 'reporting-global',

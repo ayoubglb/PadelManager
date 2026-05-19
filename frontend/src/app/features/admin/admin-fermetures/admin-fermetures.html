@@ -1,0 +1,199 @@
+<div class="flex flex-col gap-4 max-w-6xl mx-auto">
+
+  <!-- En-tête -->
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Jours de fermeture</h1>
+    <p class="text-sm text-gray-500">
+      @if (isAdminSite()) {
+        Fermetures spécifiques à votre site
+      } @else {
+        Gérer les fermetures globales et par site
+      }
+    </p>
+  </div>
+
+  @if (isAdminGlobal()) {
+    <!-- Vue Admin Global : 2 onglets -->
+    <mat-tab-group dynamicHeight>
+
+      <!-- ONGLET 1 : Fermetures globales -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">public</mat-icon>
+          Fermetures globales
+          @if (globalesTriees().length > 0) {
+            <span class="ml-2 bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {{ globalesTriees().length }}
+            </span>
+          }
+        </ng-template>
+
+        <div class="pt-4 flex flex-col gap-4">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-sm text-gray-600">
+              Une fermeture globale s'applique à <span class="font-semibold">tous les sites</span> simultanément.
+            </p>
+            <button mat-flat-button color="primary" (click)="openCreateGlobaleDialog()">
+              <mat-icon>add</mat-icon>
+              Nouvelle fermeture globale
+            </button>
+          </div>
+
+          @if (globalesTriees().length === 0) {
+            <mat-card>
+              <mat-card-content class="text-center py-8 text-gray-500">
+                <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">event_available</mat-icon>
+                <p>Aucune fermeture globale planifiée.</p>
+              </mat-card-content>
+            </mat-card>
+          } @else {
+            <mat-card>
+              <mat-card-content class="!p-0">
+                <ng-container *ngTemplateOutlet="fermeturesTable; context: { $implicit: globalesTriees() }"></ng-container>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ONGLET 2 : Fermetures par site -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">business</mat-icon>
+          Fermetures par site
+        </ng-template>
+
+        <div class="pt-4 flex flex-col gap-4">
+          <mat-card>
+            <mat-card-content class="!pt-4">
+              <app-site-selector [(selectedSiteId)]="selectedSiteId" />
+            </mat-card-content>
+          </mat-card>
+
+          @if (selectedSiteId() === null) {
+            <mat-card>
+              <mat-card-content class="text-center py-8 text-gray-500">
+                <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">apartment</mat-icon>
+                <p>Sélectionnez un site pour voir ses fermetures.</p>
+              </mat-card-content>
+            </mat-card>
+          } @else {
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <p class="text-sm text-gray-600">
+                Fermetures spécifiques à <span class="font-semibold">{{ siteCourant()?.nom }}</span>
+                (hors fermetures globales).
+              </p>
+              <button mat-flat-button color="primary" (click)="openCreateSiteDialog()">
+                <mat-icon>add</mat-icon>
+                Nouvelle fermeture
+              </button>
+            </div>
+
+            @if (loading() && siteTriees().length === 0) {
+              <div class="flex items-center justify-center p-8">
+                <mat-spinner diameter="40"></mat-spinner>
+              </div>
+            } @else if (siteTriees().length === 0) {
+              <mat-card>
+                <mat-card-content class="text-center py-8 text-gray-500">
+                  <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">event_available</mat-icon>
+                  <p>Aucune fermeture planifiée pour ce site.</p>
+                </mat-card-content>
+              </mat-card>
+            } @else {
+              <mat-card>
+                <mat-card-content class="!p-0">
+                  <ng-container *ngTemplateOutlet="fermeturesTable; context: { $implicit: siteTriees() }"></ng-container>
+                </mat-card-content>
+              </mat-card>
+            }
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  } @else {
+    <!-- Vue Admin Site : juste les fermetures de son site -->
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <p class="text-sm text-gray-600">
+        Fermetures spécifiques à <span class="font-semibold">{{ siteCourant()?.nom }}</span>
+        (les fermetures globales sont gérées par l'administrateur global).
+      </p>
+      <button mat-flat-button color="primary" (click)="openCreateSiteDialog()">
+        <mat-icon>add</mat-icon>
+        Nouvelle fermeture
+      </button>
+    </div>
+
+    @if (loading() && siteTriees().length === 0) {
+      <div class="flex items-center justify-center p-8">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else if (siteTriees().length === 0) {
+      <mat-card>
+        <mat-card-content class="text-center py-8 text-gray-500">
+          <mat-icon class="!text-5xl !w-12 !h-12 text-gray-300 mb-2">event_available</mat-icon>
+          <p>Aucune fermeture planifiée pour votre site.</p>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card>
+        <mat-card-content class="!p-0">
+          <ng-container *ngTemplateOutlet="fermeturesTable; context: { $implicit: siteTriees() }"></ng-container>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+</div>
+
+<!-- Template réutilisable du tableau -->
+<ng-template #fermeturesTable let-fermetures>
+  <div class="overflow-x-auto">
+    <table mat-table [dataSource]="fermetures" class="!w-full">
+
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef class="!w-40">Date</th>
+        <td mat-cell *matCellDef="let f" class="font-medium">
+          {{ f.dateFermeture | date:'EEEE dd MMMM yyyy':'':'fr-BE' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="raison">
+        <th mat-header-cell *matHeaderCellDef>Raison</th>
+        <td mat-cell *matCellDef="let f">{{ f.raison }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="statut">
+        <th mat-header-cell *matHeaderCellDef class="!w-32">Statut</th>
+        <td mat-cell *matCellDef="let f">
+          @if (isPassee(f.dateFermeture)) {
+            <mat-chip class="!bg-gray-100 !text-gray-600">Passée</mat-chip>
+          } @else {
+            <mat-chip class="!bg-green-50 !text-green-700">À venir</mat-chip>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="!text-right !w-24">Actions</th>
+        <td mat-cell *matCellDef="let f" class="!text-right">
+          @if (!isPassee(f.dateFermeture)) {
+            <button
+              mat-icon-button
+              color="warn"
+              matTooltip="Supprimer cette fermeture"
+              (click)="delete(f)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          } @else {
+            <span class="text-xs text-gray-400 italic mr-2">Non modifiable</span>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"
+          [class.opacity-60]="isPassee(row.dateFermeture)"></tr>
+    </table>
+  </div>
+</ng-template>
