@@ -1,8 +1,5 @@
 # Padel Manager
 
-![Backend CI](https://github.com/ayoubglb/PadelManager/actions/workflows/backend-ci.yml/badge.svg)
-![Frontend CI](https://github.com/ayoubglb/PadelManager/actions/workflows/frontend-ci.yml/badge.svg)
-
 ## Pile technologique
 
 | Couche     | Technologie                                                      |
