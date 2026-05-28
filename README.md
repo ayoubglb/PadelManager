@@ -1,7 +1,5 @@
 # Padel Manager
 
-![Backend CI](https://github.com/ayoubglb/PadelManager/actions/workflows/backend-ci.yml/badge.svg)
-![Frontend CI](https://github.com/ayoubglb/PadelManager/actions/workflows/frontend-ci.yml/badge.svg)
 
 ## Pile technologique
 
@@ -125,6 +123,33 @@ docker compose logs -f mssql                # voir les logs
 docker compose exec mssql /opt/mssql-tools18/bin/sqlcmd \
   -S localhost -U sa -P 'Padel_SA_Pass_2026!' -C -N    # shell SQL
 ```
+
+## Comptes de test de l'application
+| Mail | Type de compte | Site | MDP |
+|---|---|---|---|
+| admin.global@padelmanager.be | Admin | Aucun | Admin2026! |
+| membre.global@padelmanager.be | Membre | Aucun | Dev2026! |
+| membre.libre@padelmanager.be | Libre | Aucun | Dev2026! |
+| admin.site.anderlecht@padelmanager.be | Admin | Anderlecht | Admin2026! |
+| admin.site.forest@padelmanager.be | Admin | Forest | Admin2026! |
+| admin.site.drogenbos@padelmanager.be | Admin | Drogenbos | Admin2026! |
+| admin.site.spl@padelmanager.be | Admin | SPL | Admin2026! |
+| membre.site@padelmanager.be | Membre | Anderlecht | Dev2026! |
+| membre.anderlecht.2@padelmanager.be | Membre | Anderlecht | Dev2026! |
+| membre.anderlecht.3@padelmanager.be | Membre | Anderlecht | Dev2026! |
+| membre.anderlecht.4@padelmanager.be | Membre | Anderlecht | Dev2026! |
+| membre.forest.1@padelmanager.be | Membre | Forest | Dev2026! |
+| membre.forest.2@padelmanager.be | Membre | Forest | Dev2026! |
+| membre.forest.3@padelmanager.be | Membre | Forest | Dev2026! |
+| membre.forest.4@padelmanager.be | Membre | Forest | Dev2026! |
+| membre.drogenbos.1@padelmanager.be | Membre | Drogenbos | Dev2026! |
+| membre.drogenbos.2@padelmanager.be | Membre | Drogenbos | Dev2026! |
+| membre.drogenbos.3@padelmanager.be | Membre | Drogenbos | Dev2026! |
+| membre.drogenbos.4@padelmanager.be | Membre | Drogenbos | Dev2026! |
+| membre.spl.1@padelmanager.be | Membre | SPL | Dev2026! |
+| membre.spl.2@padelmanager.be | Membre | SPL | Dev2026! |
+| membre.spl.3@padelmanager.be | Membre | SPL | Dev2026! |
+| membre.spl.4@padelmanager.be | Membre | SPL | Dev2026! |
 
 ## URLs utiles (après lancement)
 
