@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.math.BigDecimal;
 
-// Service d'automatisation des matchs EF-SYS
+// Service d'automatisation des matchs
 // Le job @Scheduled orchestre les traitements automatiques 24h avant chaque match
 @Slf4j
 @Service

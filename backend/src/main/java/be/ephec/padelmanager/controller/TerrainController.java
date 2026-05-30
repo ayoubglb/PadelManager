@@ -48,7 +48,7 @@ public class TerrainController {
 
     @PostMapping("/sites/{siteId}/terrains")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
-    @Operation(summary = "Création d'un terrain dans un site (CF-RS-005)")
+    @Operation(summary = "Création d'un terrain dans un site")
     public ResponseEntity<TerrainDTO> creer(
             @PathVariable Long siteId,
             @Valid @RequestBody CreateTerrainRequest requete,
