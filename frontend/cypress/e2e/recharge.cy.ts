@@ -32,41 +32,40 @@ describe('Recharge de solde', () => {
     cy.get('input[formcontrolname="montant"]').should('be.visible');
   });
 
-  it('recharge 50 € et met à jour le solde affiché', () => {
+  it('recharge 30 € et met à jour le solde affiché', () => {
     cy.visit('/transactions');
 
-    // Capture du solde avant recharge (texte du badge solde)
+    // Attendre que le solde soit chargé (pas le tiret "—")
     cy.get('app-solde-badge')
+      .should('not.contain', '—')
       .invoke('text')
       .then((soldeAvantTexte) => {
         const soldeAvant = parseSolde(soldeAvantTexte);
+        expect(soldeAvant).to.be.greaterThan(0); // sécurité : on doit avoir une vraie valeur
 
         // Ouvre le dialog
         cy.contains('button', 'Recharger mon compte').click();
         cy.contains('Recharger mon compte').should('be.visible');
 
-       // Sélectionne le montant prédéfini de 30 €
+        // Sélectionne le montant prédéfini de 30 €
         cy.contains('button', '30 €').click();
-
-        // Vérifie que l'input s'est rempli à 30
         cy.get('input[formcontrolname="montant"]').should('have.value', '30');
 
-        // Clic sur le bouton Recharger dans le dialog
+        // Clic sur Recharger
         cy.get('mat-dialog-actions').contains('button', 'Recharger').click();
 
-        // Attend que le solde soit mis à jour
-        cy.wait(1000);
+        // Attend que le dialog se ferme
+        cy.contains('Sélectionnez un montant prédéfini').should('not.exist', { timeout: 5000 });
 
-        // Le solde doit avoir augmenté de 30 €
-        cy.get('app-solde-badge')
+        // Attend que le solde se mette à jour (la nouvelle valeur arrive)
+        cy.get('app-solde-badge', { timeout: 5000 })
           .invoke('text')
-          .then((soldeApresTexte) => {
+          .should((soldeApresTexte) => {
             const soldeApres = parseSolde(soldeApresTexte);
-            expect(soldeApres).to.be.greaterThan(soldeAvant);
             expect(soldeApres - soldeAvant).to.be.closeTo(30, 0.01);
           });
 
-// Une nouvelle transaction RECHARGE est listée dans le tableau
+        // Une nouvelle transaction Recharge est listée
         cy.contains('Recharge').should('be.visible');
       });
   });
