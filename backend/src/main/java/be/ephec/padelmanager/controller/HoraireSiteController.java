@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Horaires", description = "Horaires d'ouverture des sites par année")
+@Tag(name = "Horaires", description = "Horaires d'ouverture des sites par année.")
 public class HoraireSiteController {
 
     private final HoraireSiteService horaireSiteService;
@@ -36,7 +36,7 @@ public class HoraireSiteController {
 
     @PostMapping("/sites/{siteId}/horaires")
     @PreAuthorize("hasAnyRole('ADMIN_GLOBAL', 'ADMIN_SITE')")
-    @Operation(summary = "Création d'un horaire pour une année (CF-RS-008)")
+    @Operation(summary = "Création d'un horaire pour une année")
     public ResponseEntity<HoraireSiteDTO> creer(@PathVariable Long siteId,
                                                 @Valid @RequestBody CreateHoraireSiteRequest requete) {
         return ResponseEntity.status(HttpStatus.CREATED)
