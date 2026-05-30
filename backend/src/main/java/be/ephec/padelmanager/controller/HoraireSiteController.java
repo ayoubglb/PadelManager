@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Horaires", description = "Horaires d'ouverture des sites par année")
+@Tag(name = "Horaires", description = "Horaires d'ouverture des sites par année.")
 public class HoraireSiteController {
 
     private final HoraireSiteService horaireSiteService;
